@@ -127,6 +127,10 @@ tbody tr{border-bottom:1px solid var(--border);transition:background .15s}
 tbody tr:last-child{border-bottom:none}
 tbody tr:hover{background:rgba(201,168,76,.04)}
 tbody td{padding:.8rem 1rem;font-size:.88rem;color:var(--text-primary);text-align:right}
+/* Conflict highlight */
+tbody tr.row-conflict{background:rgba(192,57,43,.12)!important;border-right:3px solid var(--red)}
+tbody tr.row-conflict:hover{background:rgba(192,57,43,.18)!important}
+.conflict-icon{font-size:.75rem;margin-right:.3rem;vertical-align:middle}
 .td-seq{color:var(--gold);font-weight:700}
 .td-pkg{display:inline-block;padding:.2rem .6rem;background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.2);color:var(--gold-light);font-size:.78rem;font-weight:600}
 .td-time,.td-date{font-size:.83rem;color:var(--text-secondary)}
@@ -344,6 +348,7 @@ tbody td{padding:.8rem 1rem;font-size:.88rem;color:var(--text-primary);text-alig
                 <option value="3">الباقة 3</option>
                 <option value="4">الباقة 4</option>
                 <option value="5">الباقة 5</option>
+                <option value="6">الباقة 6</option>
               </select>
             </div>
             <div class="form-field">
@@ -567,6 +572,7 @@ tbody td{padding:.8rem 1rem;font-size:.88rem;color:var(--text-primary);text-alig
           <option value="3">الباقة 3</option>
           <option value="4">الباقة 4</option>
           <option value="5">الباقة 5</option>
+          <option value="6">الباقة 6</option>
         </select>
       </div>
       <div class="form-field">
@@ -1168,6 +1174,23 @@ function findConflict(barber, date, timeRaw, excludeSeq=null) {
     Math.abs(timeToMins(c.timeRaw)-nm) < SLOT_MIN
   ) || null;
 }
+// Returns a Set of seq numbers that have a time conflict with another entry
+function getConflictingSeqs() {
+  const conflicted = new Set();
+  for (let i=0; i<customers.length; i++) {
+    const a = customers[i];
+    if (!a.timeRaw) continue;
+    for (let j=i+1; j<customers.length; j++) {
+      const b = customers[j];
+      if (!b.timeRaw) continue;
+      if (a.barber===b.barber && a.date===b.date &&
+          Math.abs(timeToMins(a.timeRaw)-timeToMins(b.timeRaw)) < SLOT_MIN) {
+        conflicted.add(a.seq); conflicted.add(b.seq);
+      }
+    }
+  }
+  return conflicted;
+}
 
 /* ═══════════════════════════════════════════════
    CUSTOMER DATA
@@ -1237,16 +1260,20 @@ function renderTable() {
   if(!customers.length){tbody.innerHTML='';empty.style.display='block';return;}
   empty.style.display='none';
   const canEdit=hasPerm('canEdit'), canDel=hasPerm('canDelete');
+  const conflicted = getConflictingSeqs();
   tbody.innerHTML=customers.map((c,i)=>{
     const actions=[];
     if(canEdit) actions.push(`<button class="btn-sm" data-seq="${c.seq}" onclick="openEditResv(${c.seq})">✏️</button>`);
     if(canDel)  actions.push(`<button class="btn-sm danger" data-seq="${c.seq}" onclick="confirmDel(${c.seq})">✕</button>`);
-    return `<tr class="${i===customers.length-1?'row-new':''}">
+    const isConflict = conflicted.has(c.seq);
+    const conflictBadge = isConflict ? `<span class="conflict-icon" title="تعارض في المواعيد">⚠️</span>` : '';
+    const rowClass = [i===customers.length-1?'row-new':'', isConflict?'row-conflict':''].filter(Boolean).join(' ');
+    return `<tr class="${rowClass}">
       <td class="td-seq">#${String(c.seq).padStart(3,'0')}</td>
       <td>${esc(c.name)}</td>
       <td dir="ltr" style="text-align:right">${esc(c.phone)}</td>
       <td class="td-date">${esc(c.date||'')}</td>
-      <td class="td-time">${esc(c.time)}</td>
+      <td class="td-time">${conflictBadge}${esc(c.time)}</td>
       <td><span class="td-pkg">الباقة ${esc(c.package)}</span></td>
       <td class="td-branch">${esc(c.branch||'')}</td>
       <td>${esc(c.barber)}</td>
@@ -1328,11 +1355,14 @@ function getSortedRows(){
 }
 
 function getExportData(){
-  const headers=['رقم التسلسل','اسم العميل','رقم الجوال','التاريخ','الوقت','نوع الباقة','الفرع','اسم الحلاق'];
+  const headers=['رقم التسلسل','اسم العميل','رقم الجوال','التاريخ','الوقت','نوع الباقة','الفرع','اسم الحلاق','تعارض'];
+  const conflicted = getConflictingSeqs();
   const rows=getSortedRows().map(c=>[
-    '#'+String(c.seq).padStart(3,'0'),c.name,c.phone,c.date||'',c.time,'الباقة '+c.package,c.branch||'',c.barber
+    '#'+String(c.seq).padStart(3,'0'),c.name,c.phone,c.date||'',c.time,'الباقة '+c.package,c.branch||'',c.barber,
+    conflicted.has(c.seq) ? '⚠️ تعارض' : ''
   ]);
-  return {headers,rows};
+  const conflictFlags=getSortedRows().map(c=>conflicted.has(c.seq));
+  return {headers, rows, conflictFlags};
 }
 
 function doExport(type){
@@ -1354,9 +1384,18 @@ function exportAsCSV(){
 }
 
 function exportAsExcel(){
-  const {headers,rows}=getExportData();
+  const {headers,rows,conflictFlags}=getExportData();
   const ws=XLSX.utils.aoa_to_sheet([headers,...rows]);
   ws['!cols']=headers.map(()=>({wch:20}));
+  // Red fill for conflicting rows
+  rows.forEach((r,i)=>{
+    if(!conflictFlags[i]) return;
+    r.forEach((_,j)=>{
+      const cell=XLSX.utils.encode_cell({r:i+1,c:j});
+      if(!ws[cell]) return;
+      ws[cell].s={fill:{fgColor:{rgb:'FFD6D6'},patternType:'solid'},font:{bold:true}};
+    });
+  });
   const wb=XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb,ws,'العملاء');
   XLSX.writeFile(wb,'حلاق_حان_الوعد.xlsx');
@@ -1364,17 +1403,23 @@ function exportAsExcel(){
 }
 
 function exportAsWord(){
-  const {headers,rows}=getExportData();
+  const {headers,rows,conflictFlags}=getExportData();
   const thStyle='border:1px solid #999;padding:6px 10px;background:#1a1a1a;color:#c9a84c;font-weight:bold;text-align:right';
   const tdStyle='border:1px solid #ccc;padding:6px 10px;text-align:right';
+  const tdConflict='border:1px solid #c0392b;padding:6px 10px;text-align:right;background:#ffd6d6;color:#7b0000;font-weight:bold';
   const ths=headers.map(h=>`<th style="${thStyle}">${h}</th>`).join('');
-  const trs=rows.map(r=>`<tr>${r.map(v=>`<td style="${tdStyle}">${v}</td>`).join('')}</tr>`).join('');
+  const trs=rows.map((r,i)=>{
+    const isC=conflictFlags[i];
+    const trStyle=isC?'background:#ffd6d6':'';
+    return `<tr style="${trStyle}">${r.map(v=>`<td style="${isC?tdConflict:tdStyle}">${v}</td>`).join('')}</tr>`;
+  }).join('');
   const html=`<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
     <head><meta charset="utf-8">
     <style>body{font-family:Arial,sans-serif;direction:rtl}table{border-collapse:collapse;width:100%}</style>
     </head><body>
     <h2 style="color:#c9a84c;text-align:center">حلاق حان الوعد — سجل العملاء</h2>
     <p style="text-align:center;color:#666">تاريخ التصدير: ${new Date().toLocaleDateString('ar-SA')}</p>
+    <p style="color:#c0392b;font-size:12px;text-align:right">⚠️ الصفوف المميزة بالأحمر تحتوي على تعارض في المواعيد</p>
     <table>${ths}${trs}</table></body></html>`;
   const a=document.createElement('a');
   a.href=URL.createObjectURL(new Blob(['\ufeff'+html],{type:'application/msword;charset=utf-8'}));
@@ -1383,13 +1428,20 @@ function exportAsWord(){
 }
 
 function exportAsPDF(){
-  const {headers,rows}=getExportData();
+  const {headers,rows,conflictFlags}=getExportData();
   const thS='background:#1a1a1a;color:#c9a84c;padding:8px 12px;border:1px solid #444;font-size:12px;text-align:right';
   const tdS='padding:7px 12px;border:1px solid #ddd;font-size:11px;text-align:right';
+  const tdC='padding:7px 12px;border:1px solid #c0392b;font-size:11px;text-align:right;background:#ffd6d6;color:#7b0000;font-weight:bold';
   const trAlt='background:#f9f9f9';
+  const trConf='background:#ffd6d6';
   const ths=headers.map(h=>`<th style="${thS}">${h}</th>`).join('');
-  const trs=rows.map((r,i)=>`<tr style="${i%2===1?trAlt:''}">${r.map(v=>`<td style="${tdS}">${v}</td>`).join('')}</tr>`).join('');
+  const trs=rows.map((r,i)=>{
+    const isC=conflictFlags[i];
+    const trStyle=isC?trConf:(i%2===1?trAlt:'');
+    return `<tr style="${trStyle}">${r.map(v=>`<td style="${isC?tdC:tdS}">${v}</td>`).join('')}</tr>`;
+  }).join('');
   const now=new Date().toLocaleDateString('ar-SA',{year:'numeric',month:'long',day:'numeric'});
+  const hasConflicts=conflictFlags.some(Boolean);
   const printWin=window.open('','_blank','width=900,height=700');
   printWin.document.write(`<!DOCTYPE html><html lang="ar" dir="rtl">
   <head><meta charset="utf-8">
@@ -1398,7 +1450,8 @@ function exportAsPDF(){
     *{margin:0;padding:0;box-sizing:border-box}
     body{font-family:'Segoe UI',Tahoma,Arial,sans-serif;direction:rtl;background:#fff;color:#111;padding:24px}
     h1{font-size:20px;color:#9a7530;text-align:center;margin-bottom:4px}
-    .sub{text-align:center;color:#666;font-size:12px;margin-bottom:20px}
+    .sub{text-align:center;color:#666;font-size:12px;margin-bottom:6px}
+    .conflict-note{color:#c0392b;font-size:11px;text-align:right;margin-bottom:10px;${hasConflicts?'':'display:none'}}
     table{width:100%;border-collapse:collapse;font-size:11px}
     .count{font-size:11px;color:#888;margin-bottom:8px;text-align:right}
     @media print{body{padding:10px}button{display:none!important}}
@@ -1407,6 +1460,7 @@ function exportAsPDF(){
   <h1>&#9986; حلاق حان الوعد</h1>
   <p class="sub">سجل العملاء &mdash; تاريخ التصدير: ${now}</p>
   <p class="count">إجمالي العملاء: ${rows.length}</p>
+  <p class="conflict-note">⚠️ الصفوف المميزة بالأحمر تحتوي على تعارض في المواعيد (أقل من 30 دقيقة بين موعدين لنفس الحلاق)</p>
   <table><thead><tr>${ths}</tr></thead><tbody>${trs}</tbody></table>
   <br>
   <div style="text-align:center">
