@@ -385,6 +385,7 @@ tbody td{padding:.8rem 1rem;font-size:.88rem;color:var(--text-primary);text-alig
                 <button onclick="doExport('csv');  closeExportMenu()">📄 CSV</button>
                 <button onclick="doExport('excel');closeExportMenu()">📊 Excel</button>
                 <button onclick="doExport('word'); closeExportMenu()">📝 Word</button>
+                <button onclick="doExport('pdf');  closeExportMenu()">📑 PDF</button>
               </div>
             </div>
             <button class="btn-icon" id="btnClearAll"  style="border-color:#3a1a1a;color:#c0392b" onclick="confirmClearAll()">🗑 مسح الكل</button>
@@ -1316,18 +1317,14 @@ function closeExportMenu(){document.getElementById('exportMenu').classList.remov
 document.addEventListener('click',()=>closeExportMenu());
 
 function getSortedRows(){
-  // Sort by date then time
-  const sorted=[...customers].sort((a,b)=>{
-    const da=a.date||'', db=b.date||'';
-    if(da!==db){
-      // Convert dd/mm/yyyy to yyyy-mm-dd for comparison
-      const toISO=s=>s?s.split('/').reverse().join('-'):'';
-      if(toISO(da)<toISO(db))return -1; if(toISO(da)>toISO(db))return 1;
-    }
+  // Sort by time first, then date as tiebreaker
+  return [...customers].sort((a,b)=>{
     const ta=a.timeRaw||'00:00', tb=b.timeRaw||'00:00';
-    return ta<tb?-1:ta>tb?1:0;
+    if(ta!==tb) return ta<tb?-1:1;
+    const toISO=s=>s?s.split('/').reverse().join('-'):'';
+    const da=toISO(a.date||''), db=toISO(b.date||'');
+    return da<db?-1:da>db?1:0;
   });
-  return sorted;
 }
 
 function getExportData(){
@@ -1344,6 +1341,7 @@ function doExport(type){
   if(type==='csv')  exportAsCSV();
   if(type==='excel')exportAsExcel();
   if(type==='word') exportAsWord();
+  if(type==='pdf')  exportAsPDF();
 }
 
 function exportAsCSV(){
@@ -1358,7 +1356,6 @@ function exportAsCSV(){
 function exportAsExcel(){
   const {headers,rows}=getExportData();
   const ws=XLSX.utils.aoa_to_sheet([headers,...rows]);
-  // RTL and column widths
   ws['!cols']=headers.map(()=>({wch:20}));
   const wb=XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb,ws,'العملاء');
@@ -1372,20 +1369,55 @@ function exportAsWord(){
   const tdStyle='border:1px solid #ccc;padding:6px 10px;text-align:right';
   const ths=headers.map(h=>`<th style="${thStyle}">${h}</th>`).join('');
   const trs=rows.map(r=>`<tr>${r.map(v=>`<td style="${tdStyle}">${v}</td>`).join('')}</tr>`).join('');
-  const html=`
-    <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
+  const html=`<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
     <head><meta charset="utf-8">
     <style>body{font-family:Arial,sans-serif;direction:rtl}table{border-collapse:collapse;width:100%}</style>
     </head><body>
     <h2 style="color:#c9a84c;text-align:center">حلاق حان الوعد — سجل العملاء</h2>
     <p style="text-align:center;color:#666">تاريخ التصدير: ${new Date().toLocaleDateString('ar-SA')}</p>
-    <table>${ths}${trs}</table>
-    </body></html>`;
-  const blob=new Blob(['\ufeff'+html],{type:'application/msword;charset=utf-8'});
+    <table>${ths}${trs}</table></body></html>`;
   const a=document.createElement('a');
-  a.href=URL.createObjectURL(blob);
+  a.href=URL.createObjectURL(new Blob(['\ufeff'+html],{type:'application/msword;charset=utf-8'}));
   a.download='حلاق_حان_الوعد.doc'; a.click(); URL.revokeObjectURL(a.href);
   showToast('✅ تم تحميل ملف Word');
+}
+
+function exportAsPDF(){
+  const {headers,rows}=getExportData();
+  const thS='background:#1a1a1a;color:#c9a84c;padding:8px 12px;border:1px solid #444;font-size:12px;text-align:right';
+  const tdS='padding:7px 12px;border:1px solid #ddd;font-size:11px;text-align:right';
+  const trAlt='background:#f9f9f9';
+  const ths=headers.map(h=>`<th style="${thS}">${h}</th>`).join('');
+  const trs=rows.map((r,i)=>`<tr style="${i%2===1?trAlt:''}">${r.map(v=>`<td style="${tdS}">${v}</td>`).join('')}</tr>`).join('');
+  const now=new Date().toLocaleDateString('ar-SA',{year:'numeric',month:'long',day:'numeric'});
+  const printWin=window.open('','_blank','width=900,height=700');
+  printWin.document.write(`<!DOCTYPE html><html lang="ar" dir="rtl">
+  <head><meta charset="utf-8">
+  <title>حلاق حان الوعد — سجل العملاء</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Segoe UI',Tahoma,Arial,sans-serif;direction:rtl;background:#fff;color:#111;padding:24px}
+    h1{font-size:20px;color:#9a7530;text-align:center;margin-bottom:4px}
+    .sub{text-align:center;color:#666;font-size:12px;margin-bottom:20px}
+    table{width:100%;border-collapse:collapse;font-size:11px}
+    .count{font-size:11px;color:#888;margin-bottom:8px;text-align:right}
+    @media print{body{padding:10px}button{display:none!important}}
+  </style>
+  </head><body>
+  <h1>&#9986; حلاق حان الوعد</h1>
+  <p class="sub">سجل العملاء &mdash; تاريخ التصدير: ${now}</p>
+  <p class="count">إجمالي العملاء: ${rows.length}</p>
+  <table><thead><tr>${ths}</tr></thead><tbody>${trs}</tbody></table>
+  <br>
+  <div style="text-align:center">
+    <button onclick="window.print()" style="padding:8px 24px;background:#c9a84c;border:none;color:#111;font-size:14px;cursor:pointer;border-radius:3px;font-family:inherit">
+      🖨️ طباعة / حفظ كـ PDF
+    </button>
+  </div>
+  <script>setTimeout(()=>window.print(),400);<\/script>
+  </body></html>`);
+  printWin.document.close();
+  showToast('✅ جاري فتح نافذة PDF');
 }
 
 /* ═══════════════════════════════════════════════
