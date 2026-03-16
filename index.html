@@ -9,190 +9,206 @@
 <title>حلاق حان الوعد</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&family=Cinzel:wght@400;600;700&display=swap" rel="stylesheet">
-<!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 <style>
-  :root {
-    --gold:#c9a84c; --gold-light:#e8c97a; --gold-dark:#9a7530;
-    --bg-deep:#0a0a0a; --bg-card:#111111; --bg-elevated:#1a1a1a; --bg-input:#141414;
-    --border:#2a2a2a; --border-gold:rgba(201,168,76,0.3);
-    --text-primary:#f0e6d0; --text-secondary:#a09070; --text-muted:#5a5040;
-    --red:#c0392b; --green:#27ae60;
-  }
-  *{margin:0;padding:0;box-sizing:border-box}
-  body{font-family:'Tajawal',sans-serif;background:var(--bg-deep);color:var(--text-primary);min-height:100vh;overflow-x:hidden;direction:rtl}
-  body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");opacity:.03;pointer-events:none;z-index:9999}
-  .screen{display:none;min-height:100vh;animation:fadeIn .5s ease}
-  .screen.active{display:block}
-  #landing.active,#login.active{display:flex;flex-direction:column}
-  #admin.active{display:flex;flex-direction:column}
-  @keyframes fadeIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+:root{--gold:#c9a84c;--gold-light:#e8c97a;--gold-dark:#9a7530;--bg-deep:#0a0a0a;--bg-card:#111111;--bg-elevated:#1a1a1a;--bg-input:#141414;--border:#2a2a2a;--border-gold:rgba(201,168,76,0.3);--text-primary:#f0e6d0;--text-secondary:#a09070;--text-muted:#5a5040;--red:#c0392b;--green:#27ae60;--orange:#e67e22}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Tajawal',sans-serif;background:var(--bg-deep);color:var(--text-primary);min-height:100vh;overflow-x:hidden;direction:rtl}
+body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");opacity:.03;pointer-events:none;z-index:9999}
+.screen{display:none;min-height:100vh;animation:fadeIn .5s ease}
+.screen.active{display:block}
+#landing.active{display:flex;flex-direction:column;align-items:center;justify-content:center}
+#login.active{display:flex;flex-direction:column}
+#admin.active{display:flex;flex-direction:column}
+@keyframes fadeIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
 
-  /* ══ LANDING ══ */
-  #landing{flex-direction:column;align-items:center;justify-content:center;position:relative;background:radial-gradient(ellipse 80% 60% at 50% -10%,rgba(201,168,76,.12) 0%,transparent 70%),var(--bg-deep)}
-  .deco-line{position:absolute;background:linear-gradient(180deg,transparent,var(--gold-dark),transparent);width:1px;height:100%;opacity:.2}
-  .deco-line:nth-child(1){left:15%;animation:lp 4s ease-in-out infinite}
-  .deco-line:nth-child(2){left:85%;animation:lp 4s ease-in-out infinite 2s}
-  @keyframes lp{0%,100%{opacity:.1}50%{opacity:.3}}
-  .landing-content{text-align:center;z-index:1;padding:2rem}
-  .brand-en{font-family:'Cinzel',serif;font-size:clamp(.7rem,2vw,.9rem);letter-spacing:.4em;color:var(--gold);text-transform:uppercase;margin-bottom:.5rem;opacity:.8}
-  .brand-ar{font-size:clamp(2.5rem,8vw,5rem);font-weight:900;line-height:1;background:linear-gradient(135deg,var(--gold-light) 0%,var(--gold) 50%,var(--gold-dark) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:.5rem}
-  .brand-sub{font-size:clamp(.9rem,2.5vw,1.1rem);color:var(--text-secondary);font-weight:300;letter-spacing:.1em;margin-bottom:3rem}
-  .divider{display:flex;align-items:center;gap:1rem;margin:1.5rem auto;max-width:300px}
-  .divider-line{flex:1;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent)}
-  .divider-diamond{width:8px;height:8px;background:var(--gold);transform:rotate(45deg);flex-shrink:0}
-  .btn-admin{display:inline-flex;align-items:center;gap:.75rem;padding:.9rem 2.5rem;background:transparent;border:1px solid var(--gold);color:var(--gold);font-family:'Tajawal',sans-serif;font-size:1rem;font-weight:600;cursor:pointer;letter-spacing:.05em;transition:all .3s;position:relative;overflow:hidden}
-  .btn-admin::before{content:'';position:absolute;inset:0;background:var(--gold);transform:scaleX(0);transform-origin:right;transition:transform .3s;z-index:-1}
-  .btn-admin:hover{color:var(--bg-deep)}.btn-admin:hover::before{transform:scaleX(1)}
-  .services-strip{display:flex;gap:2rem;margin-top:4rem;padding-top:2.5rem;border-top:1px solid var(--border);flex-wrap:wrap;justify-content:center}
-  .service-item{text-align:center;opacity:.7;transition:opacity .3s}.service-item:hover{opacity:1}
-  .service-icon{font-size:1.5rem;margin-bottom:.3rem}.service-label{font-size:.8rem;color:var(--text-secondary)}
+/* LANDING */
+#landing{position:relative;background:radial-gradient(ellipse 80% 60% at 50% -10%,rgba(201,168,76,.12) 0%,transparent 70%),var(--bg-deep)}
+.deco-line{position:absolute;background:linear-gradient(180deg,transparent,var(--gold-dark),transparent);width:1px;height:100%;opacity:.2}
+.deco-line:nth-child(1){left:15%;animation:lp 4s ease-in-out infinite}
+.deco-line:nth-child(2){left:85%;animation:lp 4s ease-in-out infinite 2s}
+@keyframes lp{0%,100%{opacity:.1}50%{opacity:.3}}
+.landing-content{text-align:center;z-index:1;padding:2rem}
+.brand-ar{font-size:clamp(2.2rem,7vw,4.5rem);font-weight:900;line-height:1.1;background:linear-gradient(135deg,var(--gold-light) 0%,var(--gold) 50%,var(--gold-dark) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:.5rem}
+.brand-sub{font-size:clamp(.9rem,2.5vw,1.1rem);color:var(--text-secondary);font-weight:300;letter-spacing:.1em;margin-bottom:3rem}
+.divider{display:flex;align-items:center;gap:1rem;margin:1.5rem auto;max-width:300px}
+.divider-line{flex:1;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent)}
+.divider-diamond{width:8px;height:8px;background:var(--gold);transform:rotate(45deg);flex-shrink:0}
+.btn-admin{display:inline-flex;align-items:center;gap:.75rem;padding:.9rem 2.5rem;background:transparent;border:1px solid var(--gold);color:var(--gold);font-family:'Tajawal',sans-serif;font-size:1rem;font-weight:600;cursor:pointer;letter-spacing:.05em;transition:all .3s;position:relative;overflow:hidden}
+.btn-admin::before{content:'';position:absolute;inset:0;background:var(--gold);transform:scaleX(0);transform-origin:right;transition:transform .3s;z-index:-1}
+.btn-admin:hover{color:var(--bg-deep)}.btn-admin:hover::before{transform:scaleX(1)}
+.services-strip{display:flex;gap:2rem;margin-top:4rem;padding-top:2.5rem;border-top:1px solid var(--border);flex-wrap:wrap;justify-content:center}
+.service-item{text-align:center;opacity:.7;transition:opacity .3s}.service-item:hover{opacity:1}
+.service-icon{font-size:1.5rem;margin-bottom:.3rem}.service-label{font-size:.8rem;color:var(--text-secondary)}
 
-  /* ══ LOGIN ══ */
-  #login{flex-direction:column;align-items:center;justify-content:center;min-height:100vh;background:radial-gradient(ellipse 60% 50% at 50% 50%,rgba(201,168,76,.07) 0%,transparent 70%),var(--bg-deep)}
-  .login-wrapper{display:flex;align-items:center;justify-content:center;width:100%;min-height:100vh;padding:2rem 1rem}
-  .login-box{width:100%;max-width:440px;padding:3rem 2.5rem;background:var(--bg-card);border:1px solid var(--border-gold);position:relative}
-  .login-box::before,.login-box::after{content:'';position:absolute;width:20px;height:20px;border-color:var(--gold);border-style:solid}
-  .login-box::before{top:-1px;right:-1px;border-width:2px 2px 0 0}.login-box::after{bottom:-1px;left:-1px;border-width:0 0 2px 2px}
-  .login-logo{text-align:center;margin-bottom:2rem}
-  .login-logo .sci{font-size:2rem;color:var(--gold);display:block;margin-bottom:.5rem}
-  .login-logo h2{font-size:1.3rem;font-weight:700;color:var(--gold-light);margin-bottom:.2rem}
-  .login-logo p{font-size:.85rem;color:var(--text-muted)}
-  .form-group{margin-bottom:1.25rem}
-  .form-group label{display:block;font-size:.85rem;color:var(--text-secondary);margin-bottom:.5rem;font-weight:500}
-  .form-group input{width:100%;padding:.75rem 1rem;background:var(--bg-input);border:1px solid var(--border);color:var(--text-primary);font-family:'Tajawal',sans-serif;font-size:1rem;outline:none;transition:border-color .2s,box-shadow .2s;direction:rtl}
-  .form-group input:focus{border-color:var(--gold);box-shadow:0 0 0 2px rgba(201,168,76,.1)}
-  .btn-primary{width:100%;padding:.9rem;background:linear-gradient(135deg,var(--gold-dark),var(--gold),var(--gold-dark));background-size:200% 100%;border:none;color:var(--bg-deep);font-family:'Tajawal',sans-serif;font-size:1rem;font-weight:700;cursor:pointer;transition:background-position .4s,transform .15s,opacity .2s;letter-spacing:.03em}
-  .btn-primary:hover{background-position:right center;transform:translateY(-1px)}.btn-primary:disabled{opacity:.5;cursor:not-allowed;transform:none}
-  .login-back{display:block;text-align:center;margin-top:1.25rem;color:var(--text-muted);font-size:.85rem;cursor:pointer;transition:color .2s;background:none;border:none;font-family:'Tajawal',sans-serif;width:100%}
-  .login-back:hover{color:var(--gold)}
-  .alert-box{padding:.65rem 1rem;font-size:.85rem;margin-bottom:1rem;text-align:center;display:none;line-height:1.5}
-  .alert-box.show{display:block}
-  .alert-error{background:rgba(192,57,43,.15);border:1px solid rgba(192,57,43,.4);color:#e74c3c}
-  .alert-warn{background:rgba(230,126,34,.12);border:1px solid rgba(230,126,34,.35);color:#e67e22}
-  .alert-success{background:rgba(39,174,96,.12);border:1px solid rgba(39,174,96,.3);color:#27ae60}
+/* LOGIN */
+#login{align-items:center;justify-content:center;min-height:100vh;background:radial-gradient(ellipse 60% 50% at 50% 50%,rgba(201,168,76,.07) 0%,transparent 70%),var(--bg-deep)}
+.login-wrapper{display:flex;align-items:center;justify-content:center;width:100%;min-height:100vh;padding:2rem 1rem}
+.login-box{width:100%;max-width:440px;padding:3rem 2.5rem;background:var(--bg-card);border:1px solid var(--border-gold);position:relative}
+.login-box::before,.login-box::after{content:'';position:absolute;width:20px;height:20px;border-color:var(--gold);border-style:solid}
+.login-box::before{top:-1px;right:-1px;border-width:2px 2px 0 0}.login-box::after{bottom:-1px;left:-1px;border-width:0 0 2px 2px}
+.login-logo{text-align:center;margin-bottom:2rem}
+.login-logo .sci{font-size:2rem;color:var(--gold);display:block;margin-bottom:.5rem}
+.login-logo h2{font-size:1.3rem;font-weight:700;color:var(--gold-light);margin-bottom:.2rem}
+.login-logo p{font-size:.85rem;color:var(--text-muted)}
 
-  /* ══ ADMIN ══ */
-  #admin{flex-direction:column;min-height:100vh}
-  .admin-header{background:var(--bg-card);border-bottom:1px solid var(--border-gold);padding:1rem 2rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
-  .admin-header-brand{display:flex;align-items:center;gap:.75rem}
-  .logo-mark{width:38px;height:38px;border:1px solid var(--gold);display:flex;align-items:center;justify-content:center;font-size:1.1rem;color:var(--gold);flex-shrink:0}
-  .admin-header-brand h1{font-size:1.1rem;font-weight:700;color:var(--gold-light);line-height:1.2}
-  .admin-header-brand span{font-size:.75rem;color:var(--text-muted);display:block;font-weight:400}
-  .header-actions{display:flex;align-items:center;gap:1rem;flex-wrap:wrap}
-  .badge-count{background:var(--gold);color:var(--bg-deep);font-size:.75rem;font-weight:700;padding:.2rem .6rem;border-radius:20px}
-  .badge-super{background:rgba(201,168,76,.15);color:var(--gold);border:1px solid var(--border-gold);font-size:.72rem;font-weight:600;padding:.2rem .6rem}
-  .btn-logout{padding:.5rem 1.2rem;background:transparent;border:1px solid #3a2020;color:#c0392b;font-family:'Tajawal',sans-serif;font-size:.85rem;cursor:pointer;transition:all .2s}
-  .btn-logout:hover{background:rgba(192,57,43,.1);border-color:#c0392b}
-  .admin-tabs{background:var(--bg-card);border-bottom:1px solid var(--border);padding:0 2rem;display:flex;gap:0}
-  .tab-btn{padding:.85rem 1.5rem;background:none;border:none;border-bottom:2px solid transparent;color:var(--text-muted);font-family:'Tajawal',sans-serif;font-size:.9rem;font-weight:600;cursor:pointer;transition:all .2s}
-  .tab-btn:hover{color:var(--text-secondary)}.tab-btn.active{color:var(--gold);border-bottom-color:var(--gold)}
-  .tab-panel{display:none}.tab-panel.active{display:block}
-  .admin-body{flex:1;padding:2rem;max-width:1100px;width:100%;margin:0 auto}
-  .section-header{display:flex;align-items:center;gap:.75rem;margin-bottom:1.5rem}
-  .sh-icon{width:36px;height:36px;border:1px solid var(--border-gold);display:flex;align-items:center;justify-content:center;color:var(--gold);font-size:1rem;flex-shrink:0}
-  .section-header h2{font-size:1.15rem;font-weight:700;color:var(--text-primary)}
-  .section-header p{font-size:.8rem;color:var(--text-muted)}
-  .entry-card{background:var(--bg-card);border:1px solid var(--border);border-top:2px solid var(--gold);padding:2rem;margin-bottom:2.5rem}
-  .form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1.25rem}
-  .form-field{display:flex;flex-direction:column;gap:.4rem}
-  .form-field label{font-size:.82rem;color:var(--text-secondary);font-weight:500}
-  .field-seq{padding:.75rem 1rem;background:#0d0d0d;border:1px solid var(--border);color:var(--gold);font-size:1.1rem;font-weight:700;text-align:center;letter-spacing:.1em;font-family:'Tajawal',sans-serif}
-  .form-field input,.form-field select{padding:.75rem 1rem;background:var(--bg-input);border:1px solid var(--border);color:var(--text-primary);font-family:'Tajawal',sans-serif;font-size:.95rem;outline:none;transition:border-color .2s,box-shadow .2s;direction:rtl;width:100%}
-  .form-field input:focus,.form-field select:focus{border-color:var(--gold);box-shadow:0 0 0 2px rgba(201,168,76,.08)}
-  .form-field input.invalid,.form-field select.invalid{border-color:var(--red)}
-  .field-hint{font-size:.72rem;color:var(--text-muted);margin-top:.1rem}
-  .field-hint.err{color:var(--red)}
-  .form-field select option{background:var(--bg-card)}
-  .form-actions{display:flex;gap:1rem;margin-top:1.75rem;flex-wrap:wrap}
-  .btn-save{flex:1;min-width:140px;padding:.85rem 1.5rem;background:linear-gradient(135deg,var(--gold-dark),var(--gold));border:none;color:var(--bg-deep);font-family:'Tajawal',sans-serif;font-size:1rem;font-weight:700;cursor:pointer;transition:opacity .2s,transform .15s;display:flex;align-items:center;justify-content:center;gap:.5rem}
-  .btn-save:hover{opacity:.9;transform:translateY(-1px)}.btn-save:active{transform:translateY(0)}
-  .btn-clear{flex:1;min-width:140px;padding:.85rem 1.5rem;background:transparent;border:1px solid var(--border);color:var(--text-secondary);font-family:'Tajawal',sans-serif;font-size:1rem;font-weight:600;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:.5rem}
-  .btn-clear:hover{border-color:var(--red);color:var(--red);background:rgba(192,57,43,.06)}
-  .table-card{background:var(--bg-card);border:1px solid var(--border);overflow:hidden}
-  .table-toolbar{padding:1rem 1.5rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem}
-  .table-toolbar h3{font-size:1rem;font-weight:700;color:var(--text-primary)}
-  .tbl-actions{display:flex;gap:.75rem;align-items:center;flex-wrap:wrap}
-  .btn-icon{padding:.45rem 1rem;background:transparent;border:1px solid var(--border);color:var(--text-secondary);font-family:'Tajawal',sans-serif;font-size:.8rem;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:.4rem}
-  .btn-icon:hover{border-color:var(--gold);color:var(--gold)}
-  .btn-danger-sm{padding:.4rem .8rem;background:transparent;border:1px solid transparent;color:var(--text-muted);font-family:'Tajawal',sans-serif;font-size:.78rem;cursor:pointer;transition:all .2s}
-  .btn-danger-sm:hover{border-color:var(--red);color:var(--red);background:rgba(192,57,43,.08)}
-  .table-wrap{overflow-x:auto}
-  table{width:100%;border-collapse:collapse;min-width:800px}
-  thead tr{background:#0e0e0e;border-bottom:1px solid var(--border-gold)}
-  thead th{padding:.9rem 1rem;font-size:.78rem;font-weight:700;color:var(--gold);text-align:right;letter-spacing:.05em;white-space:nowrap}
-  tbody tr{border-bottom:1px solid var(--border);transition:background .15s}
-  tbody tr:last-child{border-bottom:none}
-  tbody tr:hover{background:rgba(201,168,76,.04)}
-  tbody td{padding:.85rem 1rem;font-size:.9rem;color:var(--text-primary);text-align:right}
-  .td-seq{color:var(--gold);font-weight:700}
-  .td-pkg{display:inline-block;padding:.2rem .6rem;background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.2);color:var(--gold-light);font-size:.8rem;font-weight:600}
-  .td-time,.td-date{font-size:.85rem;color:var(--text-secondary)}
-  .empty-state{text-align:center;padding:4rem 2rem;color:var(--text-muted)}
-  .empty-state .ei{font-size:2.5rem;margin-bottom:1rem;opacity:.5}
+/* SHARED FORM ELEMENTS */
+.form-group{margin-bottom:1.25rem}
+.form-group label,.form-field label{display:block;font-size:.85rem;color:var(--text-secondary);margin-bottom:.5rem;font-weight:500}
+.form-group input,.form-field input,.form-field select{width:100%;padding:.75rem 1rem;background:var(--bg-input);border:1px solid var(--border);color:var(--text-primary);font-family:'Tajawal',sans-serif;font-size:.95rem;outline:none;transition:border-color .2s,box-shadow .2s;direction:rtl}
+.form-group input:focus,.form-field input:focus,.form-field select:focus{border-color:var(--gold);box-shadow:0 0 0 2px rgba(201,168,76,.08)}
+.form-field input.invalid,.form-field select.invalid{border-color:var(--red)}
+.field-hint{font-size:.72rem;color:var(--text-muted);margin-top:.1rem}
+.field-hint.err{color:var(--red)}
+.form-field select option{background:var(--bg-card)}
 
-  /* ══ ADMINS TAB ══ */
-  .admins-grid{display:grid;grid-template-columns:1fr 1fr;gap:2rem}
-  @media(max-width:720px){.admins-grid{grid-template-columns:1fr}}
-  .panel-card{background:var(--bg-card);border:1px solid var(--border);padding:1.5rem}
-  .panel-card.accent-top{border-top:2px solid var(--gold)}
-  .panel-card.accent-top-dim{border-top:2px solid var(--gold-dark)}
-  .panel-card h3{font-size:1rem;font-weight:700;color:var(--gold-light);margin-bottom:1rem;padding-bottom:.75rem;border-bottom:1px solid var(--border)}
-  .admin-row{display:flex;align-items:center;justify-content:space-between;padding:.65rem 0;border-bottom:1px solid var(--border)}
-  .admin-row:last-child{border-bottom:none}
-  .admin-info{display:flex;align-items:center;gap:.6rem}
-  .admin-avatar{width:32px;height:32px;background:rgba(201,168,76,.1);border:1px solid var(--border-gold);display:flex;align-items:center;justify-content:center;font-size:.85rem;flex-shrink:0}
-  .admin-uname{font-size:.9rem;font-weight:600;color:var(--text-primary)}
-  .badge-super-sm{font-size:.68rem;padding:.1rem .4rem;background:rgba(201,168,76,.15);color:var(--gold);border:1px solid var(--border-gold)}
-  .pw-strength{height:3px;margin-top:.35rem;border-radius:2px;transition:all .3s;background:var(--border);width:0}
-  .pw-s1{background:var(--red);width:25%}.pw-s2{background:#e67e22;width:50%}.pw-s3{background:#f1c40f;width:75%}.pw-s4{background:var(--green);width:100%}
+/* BUTTONS */
+.btn-primary{width:100%;padding:.9rem;background:linear-gradient(135deg,var(--gold-dark),var(--gold),var(--gold-dark));background-size:200% 100%;border:none;color:var(--bg-deep);font-family:'Tajawal',sans-serif;font-size:1rem;font-weight:700;cursor:pointer;transition:background-position .4s,transform .15s,opacity .2s;letter-spacing:.03em}
+.btn-primary:hover{background-position:right center;transform:translateY(-1px)}.btn-primary:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.login-back{display:block;text-align:center;margin-top:1.25rem;color:var(--text-muted);font-size:.85rem;cursor:pointer;transition:color .2s;background:none;border:none;font-family:'Tajawal',sans-serif;width:100%}
+.login-back:hover{color:var(--gold)}
+.btn-save{flex:1;min-width:140px;padding:.85rem 1.5rem;background:linear-gradient(135deg,var(--gold-dark),var(--gold));border:none;color:var(--bg-deep);font-family:'Tajawal',sans-serif;font-size:1rem;font-weight:700;cursor:pointer;transition:opacity .2s,transform .15s;display:flex;align-items:center;justify-content:center;gap:.5rem}
+.btn-save:hover{opacity:.9;transform:translateY(-1px)}.btn-save:active{transform:translateY(0)}
+.btn-clear{flex:1;min-width:140px;padding:.85rem 1.5rem;background:transparent;border:1px solid var(--border);color:var(--text-secondary);font-family:'Tajawal',sans-serif;font-size:1rem;font-weight:600;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:.5rem}
+.btn-clear:hover{border-color:var(--red);color:var(--red);background:rgba(192,57,43,.06)}
+.btn-icon{padding:.45rem 1rem;background:transparent;border:1px solid var(--border);color:var(--text-secondary);font-family:'Tajawal',sans-serif;font-size:.8rem;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:.4rem}
+.btn-icon:hover{border-color:var(--gold);color:var(--gold)}
+.btn-sm{padding:.35rem .8rem;background:transparent;border:1px solid var(--border);color:var(--text-secondary);font-family:'Tajawal',sans-serif;font-size:.75rem;cursor:pointer;transition:all .2s}
+.btn-sm:hover{border-color:var(--gold);color:var(--gold)}
+.btn-sm.danger:hover{border-color:var(--red);color:var(--red);background:rgba(192,57,43,.08)}
+.btn-sm.warn:hover{border-color:var(--orange);color:var(--orange);background:rgba(230,126,34,.08)}
 
-  /* ══ MODAL ══ */
-  .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:5000;display:none;align-items:center;justify-content:center}
-  .modal-backdrop.show{display:flex}
-  .modal{background:var(--bg-card);border:1px solid var(--border-gold);padding:2rem;max-width:420px;width:90%}
-  .modal h3{color:var(--gold-light);font-size:1.1rem;margin-bottom:.75rem}
-  .modal p{color:var(--text-secondary);font-size:.9rem;margin-bottom:1.5rem;line-height:1.6}
-  .modal-actions{display:flex;gap:.75rem;justify-content:flex-end}
-  .btn-confirm-del{padding:.6rem 1.4rem;background:var(--red);border:none;color:#fff;font-family:'Tajawal',sans-serif;font-size:.9rem;font-weight:600;cursor:pointer;transition:opacity .2s}
-  .btn-confirm-del:hover{opacity:.85}
-  .btn-cancel{padding:.6rem 1.4rem;background:transparent;border:1px solid var(--border);color:var(--text-secondary);font-family:'Tajawal',sans-serif;font-size:.9rem;cursor:pointer;transition:all .2s}
-  .btn-cancel:hover{border-color:var(--text-secondary)}
+/* ALERTS */
+.alert-box{padding:.65rem 1rem;font-size:.85rem;margin-bottom:1rem;text-align:center;display:none;line-height:1.5;border-radius:1px}
+.alert-box.show{display:block}
+.alert-error{background:rgba(192,57,43,.15);border:1px solid rgba(192,57,43,.4);color:#e74c3c}
+.alert-warn{background:rgba(230,126,34,.12);border:1px solid rgba(230,126,34,.35);color:#e67e22}
+.alert-success{background:rgba(39,174,96,.12);border:1px solid rgba(39,174,96,.3);color:#27ae60}
 
-  /* ══ TOAST ══ */
-  .toast{position:fixed;bottom:2rem;left:50%;transform:translateX(-50%) translateY(80px);background:var(--bg-elevated);border:1px solid var(--green);color:var(--green);padding:.75rem 1.5rem;font-size:.9rem;font-weight:600;z-index:10000;transition:transform .4s cubic-bezier(.34,1.56,.64,1);display:flex;align-items:center;gap:.5rem;white-space:nowrap;max-width:92vw;text-align:center}
-  .toast.show{transform:translateX(-50%) translateY(0)}
+/* ADMIN LAYOUT */
+.admin-header{background:var(--bg-card);border-bottom:1px solid var(--border-gold);padding:1rem 2rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;flex-shrink:0}
+.admin-header-brand{display:flex;align-items:center;gap:.75rem}
+.logo-mark{width:38px;height:38px;border:1px solid var(--gold);display:flex;align-items:center;justify-content:center;font-size:1.1rem;color:var(--gold);flex-shrink:0}
+.admin-header-brand h1{font-size:1.05rem;font-weight:700;color:var(--gold-light);line-height:1.2}
+.admin-header-brand span{font-size:.75rem;color:var(--text-muted);display:block;font-weight:400}
+.header-actions{display:flex;align-items:center;gap:.75rem;flex-wrap:wrap}
+.badge-count{background:var(--gold);color:var(--bg-deep);font-size:.75rem;font-weight:700;padding:.2rem .6rem;border-radius:20px}
+.badge-super{background:rgba(201,168,76,.15);color:var(--gold);border:1px solid var(--border-gold);font-size:.72rem;font-weight:600;padding:.2rem .6rem}
+.btn-logout{padding:.5rem 1.2rem;background:transparent;border:1px solid #3a2020;color:#c0392b;font-family:'Tajawal',sans-serif;font-size:.85rem;cursor:pointer;transition:all .2s}
+.btn-logout:hover{background:rgba(192,57,43,.1);border-color:#c0392b}
+.admin-tabs{background:var(--bg-card);border-bottom:1px solid var(--border);padding:0 2rem;display:flex;gap:0;flex-shrink:0;overflow-x:auto}
+.tab-btn{padding:.85rem 1.3rem;background:none;border:none;border-bottom:2px solid transparent;color:var(--text-muted);font-family:'Tajawal',sans-serif;font-size:.88rem;font-weight:600;cursor:pointer;transition:all .2s;white-space:nowrap}
+.tab-btn:hover{color:var(--text-secondary)}.tab-btn.active{color:var(--gold);border-bottom-color:var(--gold)}
+.tab-panel{display:none}.tab-panel.active{display:block}
+.admin-body{flex:1;padding:2rem;max-width:1150px;width:100%;margin:0 auto}
+.section-header{display:flex;align-items:center;gap:.75rem;margin-bottom:1.5rem}
+.sh-icon{width:36px;height:36px;border:1px solid var(--border-gold);display:flex;align-items:center;justify-content:center;color:var(--gold);font-size:1rem;flex-shrink:0}
+.section-header h2{font-size:1.1rem;font-weight:700;color:var(--text-primary)}
+.section-header p{font-size:.8rem;color:var(--text-muted)}
+.entry-card{background:var(--bg-card);border:1px solid var(--border);border-top:2px solid var(--gold);padding:2rem;margin-bottom:2.5rem}
+.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1.25rem}
+.form-field{display:flex;flex-direction:column;gap:.4rem}
+.field-seq{padding:.75rem 1rem;background:#0d0d0d;border:1px solid var(--border);color:var(--gold);font-size:1.1rem;font-weight:700;text-align:center;letter-spacing:.1em;font-family:'Tajawal',sans-serif}
+.form-actions{display:flex;gap:1rem;margin-top:1.75rem;flex-wrap:wrap}
+.no-perm-msg{text-align:center;padding:2.5rem;color:var(--text-muted);font-size:.9rem;border:1px dashed var(--border);margin-bottom:2.5rem}
 
-  /* ══ FIREBASE SETUP OVERLAY ══ */
-  #setupOverlay{position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:99998;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
-  .setup-box{background:var(--bg-card);border:1px solid var(--border-gold);max-width:600px;width:92%;padding:2.5rem;max-height:90vh;overflow-y:auto}
-  .setup-box h2{color:var(--gold-light);font-size:1.3rem;margin-bottom:.5rem}
-  .setup-box .sub{color:var(--text-muted);font-size:.85rem;margin-bottom:1.75rem;line-height:1.6}
-  .step{display:flex;gap:1rem;margin-bottom:1.25rem;align-items:flex-start}
-  .step-num{width:28px;height:28px;border:1px solid var(--gold);color:var(--gold);display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:700;flex-shrink:0;margin-top:.1rem}
-  .step-body{flex:1}
-  .step-body strong{color:var(--text-primary);font-size:.9rem;display:block;margin-bottom:.2rem}
-  .step-body p{color:var(--text-secondary);font-size:.82rem;line-height:1.6}
-  .step-body code{background:#0d0d0d;border:1px solid var(--border);color:var(--gold);padding:.15rem .4rem;font-size:.78rem;display:inline-block;margin:.1rem 0;direction:ltr}
-  .setup-divider{border:none;border-top:1px solid var(--border);margin:1.5rem 0}
-  .setup-input-label{font-size:.82rem;color:var(--text-secondary);margin-bottom:.4rem;display:block}
-  .setup-input{width:100%;padding:.7rem 1rem;background:var(--bg-input);border:1px solid var(--border);color:var(--text-primary);font-family:monospace;font-size:.78rem;outline:none;direction:ltr;margin-bottom:.75rem;resize:vertical}
-  .setup-input:focus{border-color:var(--gold)}
-  .btn-setup{width:100%;padding:.85rem;background:linear-gradient(135deg,var(--gold-dark),var(--gold));border:none;color:var(--bg-deep);font-family:'Tajawal',sans-serif;font-size:1rem;font-weight:700;cursor:pointer;transition:opacity .2s}
-  .btn-setup:hover{opacity:.9}
-  .setup-err{background:rgba(192,57,43,.15);border:1px solid rgba(192,57,43,.4);color:#e74c3c;padding:.6rem 1rem;font-size:.82rem;margin-bottom:.75rem;display:none}
-  .setup-err.show{display:block}
-  /* ══ SYNC INDICATOR ══ */
-  .sync-dot{width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block;margin-left:.4rem;animation:pulse 2s ease-in-out infinite}
-  @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.8)}}
-  .sync-offline{background:var(--red);animation:none}
+/* TABLE */
+.table-card{background:var(--bg-card);border:1px solid var(--border);overflow:hidden}
+.table-toolbar{padding:1rem 1.5rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem}
+.table-toolbar h3{font-size:1rem;font-weight:700;color:var(--text-primary)}
+.tbl-actions{display:flex;gap:.75rem;align-items:center;flex-wrap:wrap}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:820px}
+thead tr{background:#0e0e0e;border-bottom:1px solid var(--border-gold)}
+thead th{padding:.9rem 1rem;font-size:.78rem;font-weight:700;color:var(--gold);text-align:right;letter-spacing:.05em;white-space:nowrap}
+tbody tr{border-bottom:1px solid var(--border);transition:background .15s}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover{background:rgba(201,168,76,.04)}
+tbody td{padding:.8rem 1rem;font-size:.88rem;color:var(--text-primary);text-align:right}
+.td-seq{color:var(--gold);font-weight:700}
+.td-pkg{display:inline-block;padding:.2rem .6rem;background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.2);color:var(--gold-light);font-size:.78rem;font-weight:600}
+.td-time,.td-date{font-size:.83rem;color:var(--text-secondary)}
+.td-branch{font-size:.78rem;color:var(--text-muted)}
+.empty-state{text-align:center;padding:4rem 2rem;color:var(--text-muted)}
+.empty-state .ei{font-size:2.5rem;margin-bottom:1rem;opacity:.5}
+.row-actions{display:flex;gap:.3rem}
 
-  @keyframes rowIn{from{opacity:0;transform:translateX(-10px);background:rgba(201,168,76,.08)}to{opacity:1;transform:translateX(0)}}
-  .row-new{animation:rowIn .5s ease forwards}
-  ::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-track{background:var(--bg-deep)}::-webkit-scrollbar-thumb{background:var(--border)}::-webkit-scrollbar-thumb:hover{background:var(--gold-dark)}
-  @media(max-width:600px){.admin-body{padding:1rem}.entry-card{padding:1.25rem}.admin-header{padding:.75rem 1rem}.admin-tabs{padding:0 .5rem}.tab-btn{padding:.75rem .9rem;font-size:.82rem}}
-  @media print{.admin-header,.admin-tabs,.entry-card,.tbl-actions,.btn-danger-sm{display:none!important}body{background:#fff;color:#000}table,thead th,tbody td{color:#000!important}.table-card{border:1px solid #ccc}}
+/* ADMINS PANEL */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:2rem}
+@media(max-width:750px){.two-col{grid-template-columns:1fr}}
+.panel-card{background:var(--bg-card);border:1px solid var(--border);padding:1.5rem}
+.panel-card.gt{border-top:2px solid var(--gold)}
+.panel-card.gtd{border-top:2px solid var(--gold-dark)}
+.panel-card h3{font-size:1rem;font-weight:700;color:var(--gold-light);margin-bottom:1rem;padding-bottom:.75rem;border-bottom:1px solid var(--border)}
+.admin-row{display:flex;align-items:flex-start;justify-content:space-between;padding:.75rem 0;border-bottom:1px solid var(--border);gap:.5rem}
+.admin-row:last-child{border-bottom:none}
+.admin-info{display:flex;align-items:center;gap:.6rem;flex:1;min-width:0}
+.admin-avatar{width:32px;height:32px;background:rgba(201,168,76,.1);border:1px solid var(--border-gold);display:flex;align-items:center;justify-content:center;font-size:.85rem;flex-shrink:0}
+.admin-uname{font-size:.9rem;font-weight:600;color:var(--text-primary);word-break:break-all}
+.badge-super-sm{font-size:.68rem;padding:.1rem .4rem;background:rgba(201,168,76,.15);color:var(--gold);border:1px solid var(--border-gold)}
+.perm-badges{display:flex;flex-wrap:wrap;gap:.25rem;margin-top:.3rem}
+.perm-badge{font-size:.65rem;padding:.1rem .35rem;border:1px solid var(--border);color:var(--text-muted)}
+.perm-badge.on{border-color:rgba(39,174,96,.3);color:var(--green);background:rgba(39,174,96,.06)}
+.admin-row-actions{display:flex;gap:.3rem;flex-shrink:0;flex-wrap:wrap}
+
+/* PERMISSIONS */
+.perm-group{display:flex;flex-direction:column;gap:.5rem;margin-bottom:1rem}
+.perm-label{display:flex;align-items:center;gap:.65rem;cursor:pointer;padding:.55rem .75rem;border:1px solid var(--border);transition:border-color .2s}
+.perm-label:hover{border-color:var(--border-gold)}
+.perm-label input[type="checkbox"]{accent-color:var(--gold);width:15px;height:15px;cursor:pointer;flex-shrink:0}
+.perm-label span{font-size:.85rem;color:var(--text-secondary)}
+.perm-label:has(input:checked){border-color:rgba(201,168,76,.25)}
+.perm-label:has(input:checked) span{color:var(--gold-light)}
+
+/* PW STRENGTH */
+.pw-strength{height:3px;margin-top:.3rem;border-radius:2px;transition:all .3s;background:var(--border);width:0}
+.pw-s1{background:var(--red);width:25%}.pw-s2{background:var(--orange);width:50%}.pw-s3{background:#f1c40f;width:75%}.pw-s4{background:var(--green);width:100%}
+
+/* BARBERS */
+.barbers-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem}
+@media(max-width:700px){.barbers-grid{grid-template-columns:1fr}}
+.barber-branch-card{background:var(--bg-card);border:1px solid var(--border);border-top:2px solid var(--gold-dark)}
+.barber-branch-header{display:flex;align-items:center;justify-content:space-between;padding:1rem 1.25rem;border-bottom:1px solid var(--border)}
+.barber-branch-header h3{font-size:.95rem;font-weight:700;color:var(--gold-light)}
+.barber-item{display:flex;align-items:center;justify-content:space-between;padding:.65rem 1.25rem;border-bottom:1px solid var(--border)}
+.barber-item:last-child{border-bottom:none}
+.barber-name{font-size:.9rem;color:var(--text-primary)}
+.barber-item-actions{display:flex;gap:.35rem}
+.barbers-empty{text-align:center;padding:2rem;color:var(--text-muted);font-size:.85rem}
+
+/* SETTINGS */
+.settings-card{background:var(--bg-card);border:1px solid var(--border);border-top:2px solid var(--gold);padding:2rem;max-width:520px}
+
+/* SYNC DOT */
+.sync-dot{width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block;animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.8)}}
+.sync-offline{background:var(--red);animation:none}
+
+/* MODALS */
+.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:5000;display:none;align-items:center;justify-content:center;padding:1rem}
+.modal-backdrop.show{display:flex}
+.modal{background:var(--bg-card);border:1px solid var(--border-gold);padding:2rem;max-width:480px;width:100%;max-height:90vh;overflow-y:auto}
+.modal h3{color:var(--gold-light);font-size:1.1rem;margin-bottom:.75rem}
+.modal p{color:var(--text-secondary);font-size:.9rem;margin-bottom:1.5rem;line-height:1.6}
+.modal .form-field{margin-bottom:1rem}
+.modal-actions{display:flex;gap:.75rem;justify-content:flex-end;margin-top:1.5rem;flex-wrap:wrap}
+.btn-confirm-del{padding:.6rem 1.4rem;background:var(--red);border:none;color:#fff;font-family:'Tajawal',sans-serif;font-size:.9rem;font-weight:600;cursor:pointer;transition:opacity .2s}
+.btn-confirm-del:hover{opacity:.85}
+.btn-cancel{padding:.6rem 1.4rem;background:transparent;border:1px solid var(--border);color:var(--text-secondary);font-family:'Tajawal',sans-serif;font-size:.9rem;cursor:pointer;transition:all .2s}
+.btn-cancel:hover{border-color:var(--text-secondary)}
+.btn-modal-save{padding:.6rem 1.4rem;background:linear-gradient(135deg,var(--gold-dark),var(--gold));border:none;color:var(--bg-deep);font-family:'Tajawal',sans-serif;font-size:.9rem;font-weight:700;cursor:pointer;transition:opacity .2s}
+.btn-modal-save:hover{opacity:.9}
+
+/* TOAST */
+.toast{position:fixed;bottom:2rem;left:50%;transform:translateX(-50%) translateY(80px);background:var(--bg-elevated);border:1px solid var(--green);color:var(--green);padding:.75rem 1.5rem;font-size:.9rem;font-weight:600;z-index:10000;transition:transform .4s cubic-bezier(.34,1.56,.64,1);display:flex;align-items:center;gap:.5rem;white-space:nowrap;max-width:92vw}
+.toast.show{transform:translateX(-50%) translateY(0)}
+
+@keyframes rowIn{from{opacity:0;transform:translateX(-10px);background:rgba(201,168,76,.08)}to{opacity:1;transform:translateX(0)}}
+.row-new{animation:rowIn .5s ease forwards}
+::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-track{background:var(--bg-deep)}::-webkit-scrollbar-thumb{background:var(--border)}::-webkit-scrollbar-thumb:hover{background:var(--gold-dark)}
+@media(max-width:600px){.admin-body{padding:1rem}.entry-card{padding:1.25rem}.admin-header{padding:.75rem 1rem}.admin-tabs{padding:0 .5rem}}
+@media print{.admin-header,.admin-tabs,.entry-card,.tbl-actions,.row-actions,.btn-icon{display:none!important}body{background:#fff;color:#000}table,thead th,tbody td{color:#000!important}.table-card{border:1px solid #ccc}}
 </style>
 </head>
 <body>
@@ -230,7 +246,7 @@
     <div class="login-box">
       <div class="login-logo">
         <span class="sci">✂️</span>
-        <h2>لوحة تحكم MMhna</h2>
+        <h2>لوحة تحكم حان الوعد</h2>
         <p>قم بتسجيل الدخول للمتابعة</p>
       </div>
       <div class="alert-box alert-error" id="loginError"></div>
@@ -238,15 +254,13 @@
       <div class="form-group">
         <label>اسم المستخدم</label>
         <input type="text" id="loginUser" placeholder="أدخل اسم المستخدم"
-               autocorrect="off" autocapitalize="none"
-               autocomplete="off" spellcheck="false" maxlength="40"/>
+               autocorrect="off" autocapitalize="none" autocomplete="off" spellcheck="false" maxlength="40"/>
       </div>
       <div class="form-group">
         <label>كلمة المرور</label>
         <input type="password" id="loginPass" placeholder="أدخل كلمة المرور"
                autocomplete="current-password" autocorrect="off" autocapitalize="none"
-               spellcheck="false" maxlength="80"
-               onkeydown="if(event.key==='Enter')doLogin()"/>
+               spellcheck="false" maxlength="80" onkeydown="if(event.key==='Enter')doLogin()"/>
       </div>
       <button class="btn-primary" id="loginBtn" onclick="doLogin()">تسجيل الدخول</button>
       <button class="login-back" onclick="showScreen('landing')">← العودة للرئيسية</button>
@@ -260,95 +274,93 @@
     <div class="admin-header-brand">
       <div class="logo-mark">✂</div>
       <div>
-        <h1>MMhna &mdash; إدارة العملاء</h1>
+        <h1>إدارة العملاء &mdash; حلاق حان الوعد</h1>
         <span id="adminWelcome">لوحة التحكم</span>
       </div>
     </div>
     <div class="header-actions">
       <span class="badge-super" id="superBadge" style="display:none">⭐ مدير رئيسي</span>
       <span class="badge-count" id="countBadge">0 عميل</span>
-      <span title="حالة الاتصال بقاعدة البيانات"><span class="sync-dot" id="syncDot"></span></span>
+      <span title="حالة الاتصال"><span class="sync-dot" id="syncDot"></span></span>
       <button class="btn-logout" onclick="doLogout()">تسجيل الخروج ↩</button>
     </div>
   </header>
 
   <nav class="admin-tabs">
-    <button class="tab-btn active" onclick="switchTab('customers',this)">📋 العملاء</button>
-    <button class="tab-btn" id="adminsTabBtn" style="display:none" onclick="switchTab('admins',this)">👥 المشرفون</button>
+    <button class="tab-btn active" id="tabCustomers" onclick="switchTab('customers',this)">📋 العملاء</button>
+    <button class="tab-btn" id="tabAdmins"     style="display:none" onclick="switchTab('admins',this)">👥 المشرفون</button>
+    <button class="tab-btn" id="tabBarbers"    style="display:none" onclick="switchTab('barbers',this)">💈 الحلاقون</button>
+    <button class="tab-btn" id="tabSettings"   onclick="switchTab('settings',this)">⚙️ الإعدادات</button>
   </nav>
 
   <div class="admin-body">
 
     <!-- ── TAB: CUSTOMERS ── -->
     <div class="tab-panel active" id="tab-customers">
-      <div class="entry-card">
-        <div class="section-header">
-          <div class="sh-icon">📋</div>
-          <div><h2>إدخال بيانات عميل جديد</h2><p>قم بتعبئة جميع الحقول ثم اضغط حفظ</p></div>
-        </div>
-        <div class="form-grid">
-
-          <div class="form-field">
-            <label>رقم التسلسل</label>
-            <div class="field-seq" id="seqDisplay">#001</div>
+      <!-- Entry Form -->
+      <div id="entryFormWrapper">
+        <div class="entry-card">
+          <div class="section-header">
+            <div class="sh-icon">📋</div>
+            <div><h2>إدخال بيانات عميل جديد</h2><p>قم بتعبئة جميع الحقول ثم اضغط حفظ</p></div>
           </div>
-
-          <div class="form-field">
-            <label>اسم العميل <span style="color:var(--red)">*</span></label>
-            <input type="text" id="fName" placeholder="مثال: محمد أحمد" maxlength="80"/>
+          <div class="form-grid">
+            <div class="form-field">
+              <label>رقم التسلسل</label>
+              <div class="field-seq" id="seqDisplay">#001</div>
+            </div>
+            <div class="form-field">
+              <label>اسم العميل <span style="color:var(--red)">*</span></label>
+              <input type="text" id="fName" placeholder="مثال: محمد أحمد" maxlength="80"/>
+            </div>
+            <div class="form-field">
+              <label>رقم الجوال <span style="color:var(--red)">*</span></label>
+              <input type="tel" id="fPhone" placeholder="05XXXXXXXX" maxlength="10" inputmode="numeric"/>
+              <span class="field-hint" id="phoneHint">أرقام فقط &bull; 10 خانات كحد أقصى</span>
+            </div>
+            <div class="form-field">
+              <label>التاريخ <span style="color:var(--red)">*</span></label>
+              <input type="date" id="fDate"/>
+            </div>
+            <div class="form-field">
+              <label>الوقت <span style="color:var(--red)">*</span></label>
+              <input type="time" id="fTime"/>
+            </div>
+            <div class="form-field">
+              <label>نوع الباقة <span style="color:var(--red)">*</span></label>
+              <select id="fPackage">
+                <option value="" disabled selected>اختر الباقة</option>
+                <option value="1">الباقة 1</option>
+                <option value="2">الباقة 2</option>
+                <option value="3">الباقة 3</option>
+                <option value="4">الباقة 4</option>
+                <option value="5">الباقة 5</option>
+              </select>
+            </div>
+            <div class="form-field">
+              <label>الفرع <span style="color:var(--red)">*</span></label>
+              <select id="fBranch" onchange="onBranchChange('fBranch','fBarber')">
+                <option value="" disabled selected>اختر الفرع</option>
+                <option value="branch1">الفرع الأول</option>
+                <option value="branch2">الفرع الثاني</option>
+              </select>
+            </div>
+            <div class="form-field">
+              <label>اسم الحلاق <span style="color:var(--red)">*</span></label>
+              <select id="fBarber" disabled>
+                <option value="" disabled selected>اختر الفرع أولاً</option>
+              </select>
+            </div>
           </div>
-
-          <div class="form-field">
-            <label>رقم الجوال <span style="color:var(--red)">*</span></label>
-            <input type="tel" id="fPhone" placeholder="05XXXXXXXX" maxlength="10" inputmode="numeric"/>
-            <span class="field-hint" id="phoneHint">أرقام فقط &bull; 10 خانات كحد أقصى</span>
+          <div class="form-actions">
+            <button class="btn-save" onclick="saveEntry()">💾&nbsp; حفظ</button>
+            <button class="btn-clear" onclick="clearForm()">🗑️&nbsp; تفريغ الخانات</button>
           </div>
-
-          <div class="form-field">
-            <label>التاريخ <span style="color:var(--red)">*</span></label>
-            <input type="date" id="fDate"/>
-          </div>
-
-          <div class="form-field">
-            <label>الوقت <span style="color:var(--red)">*</span></label>
-            <input type="time" id="fTime"/>
-          </div>
-
-          <div class="form-field">
-            <label>نوع الباقة <span style="color:var(--red)">*</span></label>
-            <select id="fPackage">
-              <option value="" disabled selected>اختر الباقة</option>
-              <option value="1">الباقة 1</option>
-              <option value="2">الباقة 2</option>
-              <option value="3">الباقة 3</option>
-              <option value="4">الباقة 4</option>
-              <option value="5">الباقة 5</option>
-            </select>
-          </div>
-
-          <div class="form-field">
-            <label>الفرع <span style="color:var(--red)">*</span></label>
-            <select id="fBranch" onchange="onBranchChange()">
-              <option value="" disabled selected>اختر الفرع</option>
-              <option value="branch1">الفرع الأول</option>
-              <option value="branch2">الفرع الثاني</option>
-            </select>
-          </div>
-
-          <div class="form-field">
-            <label>اسم الحلاق <span style="color:var(--red)">*</span></label>
-            <select id="fBarber" disabled>
-              <option value="" disabled selected>اختر الفرع أولاً</option>
-            </select>
-          </div>
-
-        </div>
-        <div class="form-actions">
-          <button class="btn-save" onclick="saveEntry()">💾&nbsp; حفظ</button>
-          <button class="btn-clear" onclick="clearForm()">🗑️&nbsp; تفريغ الخانات</button>
         </div>
       </div>
+      <div class="no-perm-msg" id="noInsertMsg" style="display:none">🔒 ليس لديك صلاحية إضافة عملاء</div>
 
+      <!-- Table -->
       <div class="section-header">
         <div class="sh-icon">📊</div>
         <div><h2>سجل العملاء</h2><p>جميع البيانات المحفوظة</p></div>
@@ -357,136 +369,147 @@
         <div class="table-toolbar">
           <h3>قائمة العملاء</h3>
           <div class="tbl-actions">
-            <button class="btn-icon" onclick="window.print()">🖨️ طباعة</button>
-            <button class="btn-icon" onclick="exportCSV()">⬇️ تصدير CSV</button>
-            <button class="btn-icon" style="border-color:#3a1a1a;color:#c0392b" onclick="confirmClearAll()">🗑 مسح الكل</button>
+            <button class="btn-icon" id="btnPrint"     onclick="window.print()">🖨️ طباعة</button>
+            <button class="btn-icon" id="btnExport"    onclick="exportCSV()">⬇️ تصدير CSV</button>
+            <button class="btn-icon" id="btnClearAll"  style="border-color:#3a1a1a;color:#c0392b" onclick="confirmClearAll()">🗑 مسح الكل</button>
           </div>
         </div>
         <div class="table-wrap">
           <table>
             <thead><tr>
               <th>رقم التسلسل</th><th>اسم العميل</th><th>رقم الجوال</th>
-              <th>التاريخ</th><th>الوقت</th><th>نوع الباقة</th><th>الفرع</th><th>اسم الحلاق</th><th>حذف</th>
+              <th>التاريخ</th><th>الوقت</th><th>الباقة</th><th>الفرع</th><th>الحلاق</th><th>إجراءات</th>
             </tr></thead>
             <tbody id="tableBody"></tbody>
           </table>
           <div class="empty-state" id="emptyState">
             <div class="ei">💈</div>
-            <p>لا توجد بيانات محفوظة بعد. ابدأ بإدخال بيانات العميل الأول!</p>
+            <p>لا توجد بيانات محفوظة بعد.</p>
           </div>
         </div>
       </div>
-    </div><!-- /tab-customers -->
+    </div>
 
-    <!-- ── TAB: ADMINS (super only) ── -->
+    <!-- ── TAB: ADMINS ── -->
     <div class="tab-panel" id="tab-admins">
       <div class="section-header">
         <div class="sh-icon">👥</div>
-        <div><h2>إدارة المشرفين</h2><p>إضافة وإدارة حسابات المشرفين (للمدير الرئيسي فقط)</p></div>
+        <div><h2>إدارة المشرفين</h2><p>إضافة وتعديل وحذف حسابات المشرفين</p></div>
       </div>
-      <div class="admins-grid">
-
-        <div class="panel-card accent-top-dim">
+      <div class="two-col">
+        <div class="panel-card gtd">
           <h3>المشرفون الحاليون</h3>
           <div id="adminListContainer"></div>
         </div>
-
-        <div class="panel-card accent-top">
+        <div class="panel-card gt">
           <h3>➕ إضافة مشرف جديد</h3>
           <div class="alert-box alert-error"   id="addAdminErr"></div>
           <div class="alert-box alert-success" id="addAdminOk"></div>
-          <div class="form-field" style="margin-bottom:1rem">
+          <div class="form-field" style="margin-bottom:.85rem">
             <label>اسم المستخدم</label>
-            <input type="text" id="newUser" placeholder="حروف وأرقام فقط، 3 أحرف على الأقل" maxlength="40" spellcheck="false"/>
+            <input type="text" id="newUser" placeholder="حروف وأرقام، 3 أحرف على الأقل" maxlength="40" spellcheck="false" autocorrect="off" autocapitalize="none"/>
           </div>
           <div class="form-field" style="margin-bottom:.2rem">
             <label>كلمة المرور</label>
-            <input type="password" id="newPass" placeholder="8 أحرف على الأقل" maxlength="80" oninput="pwStrength(this.value)"/>
+            <input type="password" id="newPass" placeholder="8 أحرف على الأقل" maxlength="80" oninput="pwStr(this.value,'pwBar','pwLabel')"/>
           </div>
           <div class="pw-strength" id="pwBar"></div>
-          <div class="field-hint" id="pwLabel" style="margin-bottom:1rem"></div>
-          <div class="form-field" style="margin-bottom:1.5rem">
+          <div class="field-hint" id="pwLabel" style="margin-bottom:.85rem"></div>
+          <div class="form-field" style="margin-bottom:1rem">
             <label>تأكيد كلمة المرور</label>
             <input type="password" id="newPass2" placeholder="أعد إدخال كلمة المرور" maxlength="80"/>
           </div>
-          <button class="btn-save" style="width:100%;justify-content:center" onclick="addAdmin()">➕&nbsp; إضافة المشرف</button>
+          <p style="font-size:.82rem;color:var(--text-secondary);margin-bottom:.6rem;font-weight:600">الصلاحيات:</p>
+          <div class="perm-group">
+            <label class="perm-label"><input type="checkbox" id="pIns"><span>➕ إضافة عميل جديد</span></label>
+            <label class="perm-label"><input type="checkbox" id="pDel"><span>🗑 حذف عميل</span></label>
+            <label class="perm-label"><input type="checkbox" id="pDelAll"><span>💣 مسح جميع البيانات</span></label>
+            <label class="perm-label"><input type="checkbox" id="pEdit"><span>✏️ تعديل الحجوزات</span></label>
+            <label class="perm-label"><input type="checkbox" id="pExp"><span>📥 تصدير وطباعة البيانات</span></label>
+          </div>
+          <button class="btn-save" style="width:100%;justify-content:center;margin-top:.5rem" onclick="addAdmin()">➕&nbsp; إضافة المشرف</button>
         </div>
-
-      </div>
-    </div><!-- /tab-admins -->
-
-  </div>
-</div>
-
-<!-- ══ FIREBASE SETUP OVERLAY ══ -->
-<div id="setupOverlay">
-  <div class="setup-box">
-    <h2>🔥 إعداد قاعدة البيانات السحابية</h2>
-    <p class="sub">لمزامنة البيانات بين جميع الأجهزة، تحتاج إلى ربط الموقع بـ Firebase (مجاني تماماً). اتبع الخطوات أدناه مرة واحدة فقط.</p>
-
-    <div class="step">
-      <div class="step-num">1</div>
-      <div class="step-body">
-        <strong>إنشاء مشروع Firebase</strong>
-        <p>اذهب إلى <code>console.firebase.google.com</code> وسجّل دخول بحساب Google، ثم اضغط <strong>"Add project"</strong> وأدخل أي اسم للمشروع.</p>
-      </div>
-    </div>
-    <div class="step">
-      <div class="step-num">2</div>
-      <div class="step-body">
-        <strong>تفعيل Firestore Database</strong>
-        <p>من القائمة الجانبية اضغط <strong>Build → Firestore Database → Create database</strong>، اختر <strong>"Start in test mode"</strong> ثم اختر أقرب منطقة لك واضغط Enable.</p>
-      </div>
-    </div>
-    <div class="step">
-      <div class="step-num">3</div>
-      <div class="step-body">
-        <strong>إضافة تطبيق ويب</strong>
-        <p>من إعدادات المشروع (أيقونة التروس) → <strong>"Your apps" → اضغط &lt;/&gt; (Web)</strong>، أدخل أي اسم واضغط Register App.</p>
-      </div>
-    </div>
-    <div class="step">
-      <div class="step-num">4</div>
-      <div class="step-body">
-        <strong>نسخ إعدادات التطبيق</strong>
-        <p>ستظهر لك كتلة كود فيها <code>firebaseConfig</code>. انسخ النص الذي يشبه هذا الشكل وضعه في الخانة أدناه:</p>
-        <code>{ apiKey: "...", authDomain: "...", projectId: "...", ... }</code>
       </div>
     </div>
 
-    <hr class="setup-divider">
+    <!-- ── TAB: BARBERS ── -->
+    <div class="tab-panel" id="tab-barbers">
+      <div class="section-header">
+        <div class="sh-icon">💈</div>
+        <div><h2>إدارة الحلاقين</h2><p>إضافة وحذف ونقل الحلاقين بين الفروع</p></div>
+      </div>
+      <div class="barbers-grid">
+        <!-- Branch 1 -->
+        <div class="barber-branch-card">
+          <div class="barber-branch-header">
+            <h3>✂️ الفرع الأول</h3>
+            <button class="btn-sm" onclick="openAddBarberModal('branch1')">+ إضافة حلاق</button>
+          </div>
+          <div id="barberList_branch1"><div class="barbers-empty">لا يوجد حلاقون</div></div>
+        </div>
+        <!-- Branch 2 -->
+        <div class="barber-branch-card">
+          <div class="barber-branch-header">
+            <h3>✂️ الفرع الثاني</h3>
+            <button class="btn-sm" onclick="openAddBarberModal('branch2')">+ إضافة حلاق</button>
+          </div>
+          <div id="barberList_branch2"><div class="barbers-empty">لا يوجد حلاقون</div></div>
+        </div>
+      </div>
+    </div>
 
-    <div class="setup-err" id="setupErr"></div>
-    <label class="setup-input-label">الصق إعدادات Firebase هنا (محتوى الـ firebaseConfig فقط):</label>
-    <textarea class="setup-input" id="fbConfigInput" rows="6" placeholder='{ "apiKey": "AIza...", "authDomain": "your-app.firebaseapp.com", "projectId": "your-app", "storageBucket": "your-app.appspot.com", "messagingSenderId": "123456", "appId": "1:123456:web:abcdef" }'></textarea>
-    <button class="btn-setup" onclick="applyFirebaseConfig()">✅ ربط وتشغيل الموقع</button>
-  </div>
-</div>
+    <!-- ── TAB: SETTINGS ── -->
+    <div class="tab-panel" id="tab-settings">
+      <div class="section-header">
+        <div class="sh-icon">⚙️</div>
+        <div><h2>الإعدادات</h2><p>تغيير كلمة المرور الخاصة بحسابك</p></div>
+      </div>
+      <div class="settings-card">
+        <h3 style="color:var(--gold-light);font-size:1rem;margin-bottom:1.25rem;padding-bottom:.75rem;border-bottom:1px solid var(--border)">🔑 تغيير كلمة المرور</h3>
+        <div class="alert-box alert-error"   id="cpErr"></div>
+        <div class="alert-box alert-success" id="cpOk"></div>
+        <div class="form-field" style="margin-bottom:.85rem">
+          <label>كلمة المرور الحالية</label>
+          <input type="password" id="cpCur" placeholder="أدخل كلمة المرور الحالية" autocomplete="current-password" autocorrect="off" autocapitalize="none"/>
+        </div>
+        <div class="form-field" style="margin-bottom:.2rem">
+          <label>كلمة المرور الجديدة</label>
+          <input type="password" id="cpNew" placeholder="8 أحرف على الأقل" maxlength="80" oninput="pwStr(this.value,'cpBar','cpLabel')"/>
+        </div>
+        <div class="pw-strength" id="cpBar"></div>
+        <div class="field-hint" id="cpLabel" style="margin-bottom:.85rem"></div>
+        <div class="form-field" style="margin-bottom:1.5rem">
+          <label>تأكيد كلمة المرور الجديدة</label>
+          <input type="password" id="cpConf" placeholder="أعد إدخال كلمة المرور الجديدة" maxlength="80"/>
+        </div>
+        <button class="btn-save" style="max-width:300px" onclick="changeOwnPassword()">💾&nbsp; حفظ كلمة المرور</button>
+      </div>
+    </div>
 
-<!-- Toast -->
-<div class="toast" id="toast"></div>
+  </div><!-- /admin-body -->
+</div><!-- /admin -->
 
-<!-- Conflict Warning Modal -->
+<!-- ══ MODALS ══ -->
+
+<!-- Setup overlay (hidden - config embedded) -->
+<div id="setupOverlay" style="display:none"></div>
+
+<!-- Conflict modal -->
 <div class="modal-backdrop" id="conflictBg">
-  <div class="modal" style="border-color:rgba(230,126,34,0.5);max-width:480px">
-    <h3 style="color:#e67e22">⚠️ تعارض في مواعيد الحلاق</h3>
-    <p id="conflictMsg" style="line-height:1.8"></p>
-    <div style="background:rgba(230,126,34,0.08);border:1px solid rgba(230,126,34,0.25);padding:.75rem 1rem;margin-bottom:1.25rem;font-size:.82rem;color:#e67e22;border-radius:2px">
-      💡 كل حلاقة تستغرق حوالي <strong>30 دقيقة</strong>. يُنصح باختيار وقت مختلف لتجنب التعارض.
+  <div class="modal" style="border-color:rgba(230,126,34,.5)">
+    <h3 style="color:var(--orange)">⚠️ تعارض في مواعيد الحلاق</h3>
+    <p id="conflictMsg"></p>
+    <div style="background:rgba(230,126,34,.08);border:1px solid rgba(230,126,34,.2);padding:.7rem 1rem;margin-bottom:1rem;font-size:.82rem;color:var(--orange)">
+      💡 كل حلاقة تستغرق حوالي <strong>30 دقيقة</strong>. يُنصح باختيار وقت مختلف.
     </div>
     <div class="modal-actions">
-      <button class="btn-cancel" onclick="closeConflict()" style="border-color:rgba(230,126,34,0.4);color:#e67e22">
-        ← تغيير الوقت
-      </button>
-      <button id="conflictSaveBtn" style="padding:.6rem 1.4rem;background:rgba(230,126,34,0.15);border:1px solid #e67e22;color:#e67e22;font-family:'Tajawal',sans-serif;font-size:.9rem;font-weight:600;cursor:pointer;transition:all .2s"
-              onmouseover="this.style.background='rgba(230,126,34,0.3)'" onmouseout="this.style.background='rgba(230,126,34,0.15)'">
-        حفظ على أي حال ✓
-      </button>
+      <button class="btn-cancel" style="border-color:rgba(230,126,34,.3);color:var(--orange)" onclick="closeConflict()">← تغيير الوقت</button>
+      <button id="conflictSaveBtn" style="padding:.6rem 1.4rem;background:rgba(230,126,34,.15);border:1px solid var(--orange);color:var(--orange);font-family:'Tajawal',sans-serif;font-size:.9rem;font-weight:600;cursor:pointer">حفظ على أي حال ✓</button>
     </div>
   </div>
 </div>
 
-<!-- Confirm Modal -->
+<!-- Confirm modal -->
 <div class="modal-backdrop" id="modalBg">
   <div class="modal">
     <h3 id="modalTitle">تأكيد الإجراء</h3>
@@ -498,34 +521,160 @@
   </div>
 </div>
 
+<!-- Edit reservation modal -->
+<div class="modal-backdrop" id="editResvModal">
+  <div class="modal" style="max-width:560px">
+    <h3>✏️ تعديل بيانات الحجز</h3>
+    <div class="form-grid" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr))">
+      <div class="form-field">
+        <label>اسم العميل</label>
+        <input type="text" id="eName" maxlength="80"/>
+      </div>
+      <div class="form-field">
+        <label>رقم الجوال</label>
+        <input type="tel" id="ePhone" maxlength="10" inputmode="numeric"/>
+      </div>
+      <div class="form-field">
+        <label>التاريخ</label>
+        <input type="date" id="eDate"/>
+      </div>
+      <div class="form-field">
+        <label>الوقت</label>
+        <input type="time" id="eTime"/>
+      </div>
+      <div class="form-field">
+        <label>نوع الباقة</label>
+        <select id="ePackage">
+          <option value="1">الباقة 1</option>
+          <option value="2">الباقة 2</option>
+          <option value="3">الباقة 3</option>
+          <option value="4">الباقة 4</option>
+          <option value="5">الباقة 5</option>
+        </select>
+      </div>
+      <div class="form-field">
+        <label>الفرع</label>
+        <select id="eBranch" onchange="onBranchChange('eBranch','eBarber')">
+          <option value="branch1">الفرع الأول</option>
+          <option value="branch2">الفرع الثاني</option>
+        </select>
+      </div>
+      <div class="form-field">
+        <label>اسم الحلاق</label>
+        <select id="eBarber"></select>
+      </div>
+    </div>
+    <div class="alert-box alert-error" id="editResvErr"></div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeEditResv()">إلغاء</button>
+      <button class="btn-modal-save" onclick="saveEditResv()">💾 حفظ التعديلات</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit admin credentials modal -->
+<div class="modal-backdrop" id="editAdminCredModal">
+  <div class="modal">
+    <h3>✏️ تعديل بيانات المشرف</h3>
+    <input type="hidden" id="editAdminOld"/>
+    <div class="form-field" style="margin-bottom:.85rem">
+      <label>اسم المستخدم الجديد</label>
+      <input type="text" id="editAdminUser" maxlength="40" autocorrect="off" autocapitalize="none" spellcheck="false"/>
+    </div>
+    <div class="form-field" style="margin-bottom:.2rem">
+      <label>كلمة المرور الجديدة</label>
+      <input type="password" id="editAdminPass" maxlength="80" placeholder="اتركها فارغة للإبقاء على الحالية" oninput="pwStr(this.value,'eaBar','eaLabel')"/>
+    </div>
+    <div class="pw-strength" id="eaBar"></div>
+    <div class="field-hint" id="eaLabel" style="margin-bottom:.85rem">اتركها فارغة إذا لم تريد تغييرها</div>
+    <div class="alert-box alert-error" id="editAdminErr"></div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeEditAdminCred()">إلغاء</button>
+      <button class="btn-modal-save" onclick="saveAdminCred()">💾 حفظ</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit admin permissions modal -->
+<div class="modal-backdrop" id="editPermModal">
+  <div class="modal">
+    <h3>🔑 تعديل صلاحيات: <span id="editPermName" style="color:var(--gold)"></span></h3>
+    <input type="hidden" id="editPermUser"/>
+    <div class="perm-group">
+      <label class="perm-label"><input type="checkbox" id="ep_ins"><span>➕ إضافة عميل جديد</span></label>
+      <label class="perm-label"><input type="checkbox" id="ep_del"><span>🗑 حذف عميل</span></label>
+      <label class="perm-label"><input type="checkbox" id="ep_delAll"><span>💣 مسح جميع البيانات</span></label>
+      <label class="perm-label"><input type="checkbox" id="ep_edit"><span>✏️ تعديل الحجوزات</span></label>
+      <label class="perm-label"><input type="checkbox" id="ep_exp"><span>📥 تصدير وطباعة البيانات</span></label>
+    </div>
+    <div class="alert-box alert-error" id="editPermErr"></div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeEditPerm()">إلغاء</button>
+      <button class="btn-modal-save" onclick="saveAdminPerms()">💾 حفظ الصلاحيات</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add barber modal -->
+<div class="modal-backdrop" id="addBarberModal">
+  <div class="modal" style="max-width:380px">
+    <h3>➕ إضافة حلاق جديد</h3>
+    <input type="hidden" id="addBarberBranch"/>
+    <div class="form-field" style="margin-bottom:1.25rem">
+      <label id="addBarberBranchLabel">الفرع:</label>
+      <input type="text" id="addBarberName" placeholder="اسم الحلاق" maxlength="50"/>
+    </div>
+    <div class="alert-box alert-error" id="addBarberErr"></div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeAddBarber()">إلغاء</button>
+      <button class="btn-modal-save" onclick="doAddBarber()">➕ إضافة</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
 <script>
 /* ═══════════════════════════════════════════════
-   FIREBASE CONFIG  — filled in via setup overlay
-   or paste directly here after first-time setup:
-
-   const FIREBASE_CONFIG = {
-     apiKey: "...",
-     authDomain: "...",
-     projectId: "...",
-     storageBucket: "...",
-     messagingSenderId: "...",
-     appId: "..."
-   };
+   FIREBASE CONFIG
 ═══════════════════════════════════════════════ */
-const FB_CONFIG_KEY = 'mmhna_fb_config';
-let   db            = null;   // Firestore instance
-let   _unsubCustomers = null; // real-time listener unsubscribe
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyDQCD_dp3J0q8BtvnGOm4TtNKHWTbq9Rk0",
+  authDomain: "han-alwaad.firebaseapp.com",
+  projectId: "han-alwaad",
+  storageBucket: "han-alwaad.firebasestorage.app",
+  messagingSenderId: "1053434776847",
+  appId: "1:1053434776847:web:c7cb6f1d867898b066827a"
+};
 
 /* ═══════════════════════════════════════════════
    CONSTANTS
 ═══════════════════════════════════════════════ */
-const MAX_ATTEMPTS   = 5;
+const MAX_ATTEMPTS   = 10;
 const LOCKOUT_MS     = 15 * 60 * 1000;
-const SESSION_KEY    = '__mmhna_sess__';
-const LOCK_KEY       = '__mmhna_lock__';
-const SUPER_USER     = 'MMhna';
-const SUPER_PASS_RAW = 'BarberADMNMMhna';
-let   SUPER_HASH     = null;
+const SESSION_KEY    = '__hhan_sess__';
+const LOCK_KEY       = '__hhan_lock__';
+
+// Super admin usernames (always lowercase for comparison)
+const SUPER_USERS = ['mohammed.m', 'abdullah.m'];
+const SUPER_DISPLAY = { 'mohammed.m': 'Mohammed.m', 'abdullah.m': 'Abdullah.m' };
+const SUPER_PASS_DEFAULTS = { 'mohammed.m': 'M0556466605', 'abdullah.m': 'A0555441146' };
+
+const BRANCH_LABELS = { branch1: 'الفرع الأول', branch2: 'الفرع الثاني' };
+const DEFAULT_BARBERS = {
+  branch1: ['ابو مازن','سرحان','وليد','الشربيني','محمود','شعبان','نادر'],
+  branch2: ['علاء','حسن','سفيان','مجدي']
+};
+
+let db = null;
+let _unsubCustomers = null;
+let superHashes = {};
+let admins = [];
+let barbers = { branch1: [], branch2: [] };
+let customers = [], nextSeq = 1;
+let _pendingEntry = null;
+let _editingSeq = null;
 
 /* ═══════════════════════════════════════════════
    CRYPTO
@@ -540,154 +689,96 @@ function randToken() {
 }
 
 /* ═══════════════════════════════════════════════
-   FIREBASE INIT
+   FIREBASE
 ═══════════════════════════════════════════════ */
-function initFirebase(config) {
+function initFirebase(cfg) {
   try {
     if (firebase.apps.length) firebase.apps.forEach(a => a.delete());
-    firebase.initializeApp(config);
+    firebase.initializeApp(cfg);
     db = firebase.firestore();
     db.enablePersistence({ synchronizeTabs: true }).catch(() => {});
     return true;
-  } catch(e) {
-    console.error('Firebase init error:', e);
-    return false;
-  }
+  } catch(e) { console.error('Firebase init error:', e); return false; }
 }
-
-function applyFirebaseConfig() {
-  const raw    = document.getElementById('fbConfigInput').value.trim();
-  const errEl  = document.getElementById('setupErr');
-  errEl.classList.remove('show');
-
-  if (!raw) { errEl.textContent='⚠️ يرجى لصق إعدادات Firebase أولاً'; errEl.classList.add('show'); return; }
-
-  let config;
-  try {
-    // Accept both JSON and JS object literal
-    const json = raw.replace(/([{,]\s*)([a-zA-Z_][a-zA-Z0-9_]*)\s*:/g, '$1"$2":');
-    config = JSON.parse(json);
-  } catch(e) {
-    errEl.textContent = '❌ صيغة غير صحيحة. تأكد من نسخ محتوى firebaseConfig كاملاً.';
-    errEl.classList.add('show'); return;
-  }
-
-  if (!config.apiKey || !config.projectId) {
-    errEl.textContent = '❌ الإعدادات غير مكتملة. تأكد من وجود apiKey و projectId.';
-    errEl.classList.add('show'); return;
-  }
-
-  const ok = initFirebase(config);
-  if (!ok) {
-    errEl.textContent = '❌ فشل الاتصال. تحقق من صحة الإعدادات وأن Firestore مفعّل.';
-    errEl.classList.add('show'); return;
-  }
-
-  // Save config so user doesn't need to re-enter
-  try { localStorage.setItem(FB_CONFIG_KEY, JSON.stringify(config)); } catch(e){}
-  document.getElementById('setupOverlay').style.display = 'none';
-  bootApp();
-}
-
-/* ═══════════════════════════════════════════════
-   FIRESTORE HELPERS
-═══════════════════════════════════════════════ */
 function docRef(name) { return db.collection('mmhna').doc(name); }
-
 async function fsGet(name) {
-  const snap = await docRef(name).get();
-  return snap.exists ? snap.data() : null;
+  const s = await docRef(name).get(); return s.exists ? s.data() : null;
 }
-async function fsSet(name, data) {
-  await docRef(name).set(data);
+async function fsSet(name, data) { await docRef(name).set(data); }
+
+/* ═══════════════════════════════════════════════
+   SUPER ADMIN HASHES
+═══════════════════════════════════════════════ */
+async function initSuperAdmins() {
+  try {
+    const d = await fsGet('superadmins');
+    if (d && SUPER_USERS.every(u => d[u])) { superHashes = d; return; }
+  } catch(e) {}
+  // First run or Firestore unavailable — use defaults
+  for (const [u, p] of Object.entries(SUPER_PASS_DEFAULTS)) {
+    superHashes[u] = await sha256(p);
+  }
+  try { await fsSet('superadmins', superHashes); } catch(e) {}
 }
 
 /* ═══════════════════════════════════════════════
-   BRUTE-FORCE PROTECTION  (localStorage only)
+   BRUTE-FORCE PROTECTION
 ═══════════════════════════════════════════════ */
-function getLock()    { try { return JSON.parse(localStorage.getItem(LOCK_KEY)) || {n:0,until:0}; } catch(e){ return {n:0,until:0}; } }
+function getLock()    { try { return JSON.parse(localStorage.getItem(LOCK_KEY))||{n:0,until:0}; } catch(e){ return {n:0,until:0}; } }
 function setLock(s)   { localStorage.setItem(LOCK_KEY, JSON.stringify(s)); }
 function isLocked()   { return getLock().until > Date.now(); }
 function lockRemain() { return Math.max(0, getLock().until - Date.now()); }
-
-function recordFail() {
-  const s = getLock(); s.n++;
-  if (s.n >= MAX_ATTEMPTS) { s.until = Date.now() + LOCKOUT_MS; s.n = 0; }
-  setLock(s);
-}
-function clearLock() { localStorage.removeItem(LOCK_KEY); }
+function recordFail() { const s=getLock(); s.n++; if(s.n>=MAX_ATTEMPTS){s.until=Date.now()+LOCKOUT_MS;s.n=0;} setLock(s); }
+function clearLock()  { localStorage.removeItem(LOCK_KEY); }
 
 let _lockInterval = null;
 function startLockUI() {
-  const errEl = document.getElementById('loginError');
-  const wrnEl = document.getElementById('loginWarn');
-  const btn   = document.getElementById('loginBtn');
-  errEl.classList.remove('show');
-  clearInterval(_lockInterval);
+  const errEl=document.getElementById('loginError'), wrnEl=document.getElementById('loginWarn'), btn=document.getElementById('loginBtn');
+  errEl.classList.remove('show'); clearInterval(_lockInterval);
   _lockInterval = setInterval(() => {
     const rem = lockRemain();
-    if (rem <= 0) {
-      clearInterval(_lockInterval);
-      wrnEl.classList.remove('show');
-      btn.disabled = false; btn.textContent = 'تسجيل الدخول'; return;
-    }
-    const m = Math.floor(rem/60000), s = Math.floor((rem%60000)/1000);
-    wrnEl.innerHTML = `⏳ تم تعطيل تسجيل الدخول مؤقتاً. الرجاء الانتظار: <strong>${m}:${String(s).padStart(2,'0')}</strong>`;
-    wrnEl.classList.add('show');
-    btn.disabled = true; btn.textContent = 'محظور مؤقتاً...';
+    if (rem <= 0) { clearInterval(_lockInterval); wrnEl.classList.remove('show'); btn.disabled=false; btn.textContent='تسجيل الدخول'; return; }
+    const m=Math.floor(rem/60000), s=Math.floor((rem%60000)/1000);
+    wrnEl.innerHTML=`⏳ محظور مؤقتاً. الانتظار: <strong>${m}:${String(s).padStart(2,'0')}</strong>`;
+    wrnEl.classList.add('show'); btn.disabled=true; btn.textContent='محظور مؤقتاً...';
   }, 500);
 }
 
 /* ═══════════════════════════════════════════════
    SESSION
 ═══════════════════════════════════════════════ */
-function mkSession(u, sup) {
-  const s = { token: randToken(), username: u, isSuper: sup, ts: Date.now() };
-  sessionStorage.setItem(SESSION_KEY, JSON.stringify(s));
-  return s;
+function mkSession(u, isSuper, perms, display) {
+  const s = { token:randToken(), username:u, isSuper, permissions:perms||{}, displayName:display||u, ts:Date.now() };
+  sessionStorage.setItem(SESSION_KEY, JSON.stringify(s)); return s;
 }
 function killSession() { sessionStorage.removeItem(SESSION_KEY); }
-function getSession()  {
-  try { const r = sessionStorage.getItem(SESSION_KEY); return r ? JSON.parse(r) : null; } catch(e){ return null; }
-}
-function requireSess() { const s = getSession(); if (!s) { doLogout(); return null; } return s; }
-
-/* ═══════════════════════════════════════════════
-   ADMIN ACCOUNTS  (Firestore)
-═══════════════════════════════════════════════ */
-let admins = [];
-
-async function loadAdmins() {
-  const d = await fsGet('admins');
-  admins = d?.list || [];
-}
-async function saveAdmins() {
-  await fsSet('admins', { list: admins });
-}
+function getSession()  { try { const r=sessionStorage.getItem(SESSION_KEY); return r?JSON.parse(r):null; } catch(e){ return null; } }
+function requireSess() { const s=getSession(); if(!s){doLogout();return null;} return s; }
+function hasPerm(p)    { const s=getSession(); if(!s)return false; if(s.isSuper)return true; return s.permissions?.[p]===true; }
 
 /* ═══════════════════════════════════════════════
    LOGIN / LOGOUT
 ═══════════════════════════════════════════════ */
 async function doLogin() {
-  const errEl = document.getElementById('loginError');
-  errEl.classList.remove('show');
+  const errEl=document.getElementById('loginError'); errEl.classList.remove('show');
   if (isLocked()) { startLockUI(); return; }
 
   const u = document.getElementById('loginUser').value.trim().toLowerCase();
   const p = document.getElementById('loginPass').value.trim();
 
-  if (!u || !p) {
-    errEl.textContent = '⚠️ يرجى إدخال اسم المستخدم وكلمة المرور';
-    errEl.classList.add('show'); return;
-  }
+  if (!u||!p) { errEl.textContent='⚠️ يرجى إدخال اسم المستخدم وكلمة المرور'; errEl.classList.add('show'); return; }
 
   const inputHash = await sha256(p);
-  let ok = false, isSuper = false;
+  let ok=false, isSuper=false, perms={}, displayName=u;
 
-  if (u === SUPER_USER.toLowerCase() && inputHash === SUPER_HASH) { ok = true; isSuper = true; }
-  else {
-    await loadAdmins();
-    if (admins.find(a => a.username.toLowerCase() === u && a.passwordHash === inputHash)) ok = true;
+  if (SUPER_USERS.includes(u)) {
+    if (superHashes[u] && inputHash === superHashes[u]) { ok=true; isSuper=true; displayName=SUPER_DISPLAY[u]||u; }
+  } else {
+    try {
+      await loadAdmins();
+      const found = admins.find(a => a.username.toLowerCase()===u && a.passwordHash===inputHash);
+      if (found) { ok=true; perms=found.permissions||{}; displayName=found.username; }
+    } catch(e) { console.warn('loadAdmins error:', e); }
   }
 
   document.getElementById('loginPass').value = '';
@@ -696,18 +787,17 @@ async function doLogin() {
     clearLock(); clearInterval(_lockInterval);
     document.getElementById('loginWarn').classList.remove('show');
     document.getElementById('loginUser').value = '';
-    mkSession(u, isSuper);
-    setupUI(u, isSuper);
+    mkSession(u, isSuper, perms, displayName);
+    setupUI(isSuper, displayName, perms);
     startRealtimeSync();
+    if (isSuper) { await loadBarbers(); renderBarberList(); await loadAdmins(); renderAdminList(); }
     showScreen('admin');
   } else {
     recordFail();
     if (isLocked()) { startLockUI(); }
     else {
       const left = MAX_ATTEMPTS - getLock().n;
-      errEl.textContent = left > 0
-        ? `❌ بيانات الدخول غير صحيحة. المحاولات المتبقية: ${left}`
-        : '❌ بيانات الدخول غير صحيحة.';
+      errEl.textContent = left>0 ? `❌ بيانات الدخول غير صحيحة. المحاولات المتبقية: ${left}` : '❌ بيانات الدخول غير صحيحة.';
       errEl.classList.add('show');
     }
     document.getElementById('loginPass').focus();
@@ -715,47 +805,30 @@ async function doLogin() {
 }
 
 function doLogout() {
-  if (_unsubCustomers) { _unsubCustomers(); _unsubCustomers = null; }
+  if (_unsubCustomers) { _unsubCustomers(); _unsubCustomers=null; }
   killSession(); showScreen('landing');
 }
 
-function setupUI(u, isSuper) {
-  document.getElementById('adminWelcome').textContent = `مرحباً، ${esc(u)}`;
-  document.getElementById('superBadge').style.display  = isSuper ? 'inline-block' : 'none';
-  document.getElementById('adminsTabBtn').style.display = isSuper ? 'inline-block' : 'none';
+function setupUI(isSuper, displayName, perms) {
+  document.getElementById('adminWelcome').textContent = `مرحباً، ${esc(displayName)}`;
+  document.getElementById('superBadge').style.display    = isSuper ? 'inline-block' : 'none';
+  document.getElementById('tabAdmins').style.display     = isSuper ? 'inline-block' : 'none';
+  document.getElementById('tabBarbers').style.display    = isSuper ? 'inline-block' : 'none';
+
+  // Entry form visibility
+  const canIns = isSuper || (perms?.canInsert === true);
+  document.getElementById('entryFormWrapper').style.display = canIns ? 'block' : 'none';
+  document.getElementById('noInsertMsg').style.display      = canIns ? 'none'  : 'block';
+
+  // Table action buttons
+  const canExp    = isSuper || (perms?.canExport    === true);
+  const canDelAll = isSuper || (perms?.canDeleteAll === true);
+  document.getElementById('btnPrint').style.display    = canExp    ? 'inline-flex' : 'none';
+  document.getElementById('btnExport').style.display   = canExp    ? 'inline-flex' : 'none';
+  document.getElementById('btnClearAll').style.display = canDelAll ? 'inline-flex' : 'none';
+
   document.getElementById('fDate').value = todayISO();
   updateSeq();
-  if (isSuper) renderAdminList();
-}
-
-/* ═══════════════════════════════════════════════
-   REAL-TIME SYNC (Firestore onSnapshot)
-═══════════════════════════════════════════════ */
-function startRealtimeSync() {
-  if (_unsubCustomers) _unsubCustomers();
-  setSyncStatus(true);
-
-  _unsubCustomers = docRef('customers').onSnapshot(snap => {
-    setSyncStatus(true);
-    if (snap.exists) {
-      const d = snap.data();
-      customers = d.list || [];
-      nextSeq   = d.nextSeq || 1;
-    } else {
-      customers = []; nextSeq = 1;
-    }
-    renderTable(); updateSeq();
-  }, err => {
-    console.error('Firestore sync error:', err);
-    setSyncStatus(false);
-  });
-}
-
-function setSyncStatus(online) {
-  const dot = document.getElementById('syncDot');
-  if (!dot) return;
-  if (online) { dot.classList.remove('sync-offline'); dot.title = '🟢 متصل بقاعدة البيانات'; }
-  else        { dot.classList.add('sync-offline');    dot.title = '🔴 انقطع الاتصال'; }
 }
 
 /* ═══════════════════════════════════════════════
@@ -763,227 +836,99 @@ function setSyncStatus(online) {
 ═══════════════════════════════════════════════ */
 function switchTab(name, btn) {
   if (!requireSess()) return;
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
   btn.classList.add('active');
   document.getElementById('tab-'+name).classList.add('active');
 }
 
 /* ═══════════════════════════════════════════════
-   BARBER DATA
+   REAL-TIME SYNC
 ═══════════════════════════════════════════════ */
-const BARBERS = {
-  branch1: { label: 'الفرع الأول',  list: ['ابو مازن','سرحان','وليد','الشربيني','محمود','شعبان','نادر'] },
-  branch2: { label: 'الفرع الثاني', list: ['علاء','حسن','سفيان','مجدي'] }
-};
-
-function onBranchChange() {
-  const branch = document.getElementById('fBranch').value;
-  const sel    = document.getElementById('fBarber');
-  sel.innerHTML = '<option value="" disabled selected>اختر الحلاق</option>';
-  if (branch && BARBERS[branch]) {
-    BARBERS[branch].list.forEach(name => {
-      const o = document.createElement('option');
-      o.value = name; o.textContent = name; sel.appendChild(o);
-    });
-    sel.disabled = false;
-  } else {
-    sel.innerHTML = '<option value="" disabled selected>اختر الفرع أولاً</option>';
-    sel.disabled = true;
-  }
-  sel.value = ''; sel.classList.remove('invalid');
+function startRealtimeSync() {
+  if (_unsubCustomers) _unsubCustomers();
+  setSyncStatus(true);
+  _unsubCustomers = docRef('customers').onSnapshot(snap => {
+    setSyncStatus(true);
+    if (snap.exists) { const d=snap.data(); customers=d.list||[]; nextSeq=d.nextSeq||1; }
+    else { customers=[]; nextSeq=1; }
+    renderTable(); updateSeq();
+  }, err => { console.error('Sync error:', err); setSyncStatus(false); });
+}
+function setSyncStatus(online) {
+  const dot=document.getElementById('syncDot'); if(!dot)return;
+  online ? dot.classList.remove('sync-offline') : dot.classList.add('sync-offline');
 }
 
 /* ═══════════════════════════════════════════════
-   TIME CONFLICT DETECTION
+   ADMINS
 ═══════════════════════════════════════════════ */
-const SLOT_MINUTES = 30;
-function timeToMins(hhmm) { const [h,m]=hhmm.split(':').map(Number); return h*60+m; }
-function findConflict(barber, dateFormatted, timeRaw) {
-  const newMins = timeToMins(timeRaw);
-  return customers.find(c =>
-    c.barber === barber && c.date === dateFormatted && c.timeRaw &&
-    Math.abs(timeToMins(c.timeRaw) - newMins) < SLOT_MINUTES
-  ) || null;
+async function loadAdmins() {
+  try { const d=await fsGet('admins'); admins=d?.list||[]; } catch(e){ admins=[]; }
 }
+async function saveAdmins() { await fsSet('admins', {list:admins}); }
 
-/* ═══════════════════════════════════════════════
-   CUSTOMER DATA  (Firestore)
-═══════════════════════════════════════════════ */
-let customers = [], nextSeq = 1;
-let _pendingEntry = null;
-
-async function persist() {
-  await fsSet('customers', { list: customers, nextSeq });
-}
-
-function updateSeq() {
-  document.getElementById('seqDisplay').textContent = '#' + String(nextSeq).padStart(3,'0');
-}
-
-function to12h(v) {
-  if (!v) return '';
-  const [h,m] = v.split(':').map(Number);
-  return `${h%12||12}:${String(m).padStart(2,'0')} ${h>=12?'م':'ص'}`;
-}
-function fmtDate(iso) {
-  if (!iso) return '';
-  const [y,mo,d] = iso.split('-'); return `${d}/${mo}/${y}`;
-}
-function todayISO() { return new Date().toISOString().split('T')[0]; }
-
-async function saveEntry() {
-  if (!requireSess()) return;
-  const name   = document.getElementById('fName').value.trim();
-  const phone  = document.getElementById('fPhone').value.trim();
-  const date   = document.getElementById('fDate').value;
-  const time   = document.getElementById('fTime').value;
-  const pkg    = document.getElementById('fPackage').value;
-  const branch = document.getElementById('fBranch').value;
-  const barber = document.getElementById('fBarber').value;
-
-  let ok = true;
-  const v = (id, cond) => { const el=document.getElementById(id); cond?el.classList.remove('invalid'):el.classList.add('invalid'); if(!cond)ok=false; };
-  v('fName',   name.length > 0);
-  v('fPhone',  phone.length >= 7 && phone.length <= 10);
-  v('fDate',   date.length > 0);
-  v('fTime',   time.length > 0);
-  v('fPackage',pkg.length > 0);
-  v('fBranch', branch.length > 0);
-  v('fBarber', barber.length > 0);
-
-  if (phone.length > 0 && phone.length < 7) showPhHint('رقم الجوال قصير جداً', true);
-  if (!ok) { showToast('⚠️ يرجى تعبئة جميع الحقول', 'var(--red)'); return; }
-
-  const dateFormatted = fmtDate(date);
-  const branchLabel   = BARBERS[branch]?.label || branch;
-  const entry = { seq:nextSeq, name, phone, date:dateFormatted, timeRaw:time, time:to12h(time), package:pkg, branch:branchLabel, barber };
-
-  const conflict = findConflict(barber, dateFormatted, time);
-  if (conflict) {
-    _pendingEntry = entry;
-    const diffMins = Math.abs(timeToMins(conflict.timeRaw||'00:00') - timeToMins(time));
-    document.getElementById('conflictMsg').innerHTML =
-      `الحلاق <strong>${esc(barber)}</strong> (${esc(branchLabel)}) لديه موعد مسجل بالفعل في:<br>
-       <span style="color:var(--gold);font-size:1rem">📅 ${esc(conflict.date)} &nbsp; 🕐 ${esc(conflict.time)}</span><br><br>
-       الفرق بين الموعدين: <strong>${diffMins} دقيقة</strong> فقط — وهو أقل من مدة الحلاقة (30 دقيقة).`;
-    document.getElementById('conflictBg').classList.add('show');
-    return;
-  }
-  await commitEntry(entry);
-}
-
-async function commitEntry(entry) {
-  customers.push(entry);
-  nextSeq++;
-  await persist();
-  clearForm();
-  showToast('✅ تم حفظ بيانات العميل بنجاح');
-  // Table & seq update handled by onSnapshot
-}
-
-function clearForm() {
-  ['fName','fPhone','fTime'].forEach(id => { const el=document.getElementById(id); el.value=''; el.classList.remove('invalid'); });
-  document.getElementById('fPackage').value=''; document.getElementById('fPackage').classList.remove('invalid');
-  document.getElementById('fBranch').value='';  document.getElementById('fBranch').classList.remove('invalid');
-  const bs=document.getElementById('fBarber');
-  bs.innerHTML='<option value="" disabled selected>اختر الفرع أولاً</option>'; bs.disabled=true; bs.classList.remove('invalid');
-  document.getElementById('fDate').value=todayISO(); document.getElementById('fDate').classList.remove('invalid');
-  showPhHint('أرقام فقط \u2022 10 خانات كحد أقصى', false);
-  document.getElementById('fName').focus();
-}
-
-function showPhHint(msg, isErr) {
-  const h=document.getElementById('phoneHint'); h.textContent=msg;
-  isErr?h.classList.add('err'):h.classList.remove('err');
-}
-
-/* ═══════════════════════════════════════════════
-   TABLE RENDER
-═══════════════════════════════════════════════ */
-function renderTable() {
-  const tbody=document.getElementById('tableBody'), empty=document.getElementById('emptyState');
-  document.getElementById('countBadge').textContent = customers.length + ' عميل';
-  if (!customers.length) { tbody.innerHTML=''; empty.style.display='block'; return; }
-  empty.style.display='none';
-  tbody.innerHTML = customers.map((c,i) => `
-    <tr class="${i===customers.length-1?'row-new':''}">
-      <td class="td-seq">#${String(c.seq).padStart(3,'0')}</td>
-      <td>${esc(c.name)}</td>
-      <td dir="ltr" style="text-align:right">${esc(c.phone)}</td>
-      <td class="td-date">${esc(c.date||'')}</td>
-      <td class="td-time">${esc(c.time)}</td>
-      <td><span class="td-pkg">الباقة ${esc(c.package)}</span></td>
-      <td><span style="font-size:.8rem;color:var(--text-secondary)">${esc(c.branch||'')}</span></td>
-      <td>${esc(c.barber)}</td>
-      <td><button class="btn-danger-sm" onclick="confirmDel(${c.seq})">✕ حذف</button></td>
-    </tr>`).join('');
-}
-
-function confirmDel(seq) {
-  if (!requireSess()) return;
-  const c = customers.find(x=>x.seq===seq); if (!c) return;
-  openModal('حذف عميل',
-    `هل أنت متأكد من حذف بيانات العميل "<strong>${esc(c.name)}</strong>"؟ لا يمكن التراجع عن هذا الإجراء.`,
-    async () => { customers=customers.filter(x=>x.seq!==seq); await persist(); showToast('🗑️ تم حذف بيانات العميل'); }
-  );
-}
-
-function confirmClearAll() {
-  if (!requireSess()) return;
-  if (!customers.length) { showToast('⚠️ لا توجد بيانات','var(--red)'); return; }
-  openModal('مسح جميع البيانات',
-    'هل أنت متأكد من مسح <strong>جميع</strong> بيانات العملاء؟ هذا الإجراء لا يمكن التراجع عنه.',
-    async () => { customers=[]; nextSeq=1; await persist(); showToast('🗑️ تم مسح جميع البيانات'); }
-  );
-}
-
-function exportCSV() {
-  if (!requireSess()) return;
-  if (!customers.length) { showToast('⚠️ لا توجد بيانات للتصدير','var(--red)'); return; }
-  const h=['رقم التسلسل','اسم العميل','رقم الجوال','التاريخ','الوقت','نوع الباقة','الفرع','اسم الحلاق'];
-  const rows=customers.map(c=>['#'+String(c.seq).padStart(3,'0'),c.name,c.phone,c.date||'',c.time,'الباقة '+c.package,c.branch||'',c.barber]);
-  const csv='\uFEFF'+[h,...rows].map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8;'}));
-  a.download='MMhna_customers.csv'; a.click(); URL.revokeObjectURL(a.href);
-}
-
-/* ═══════════════════════════════════════════════
-   ADMIN MANAGEMENT
-═══════════════════════════════════════════════ */
 function renderAdminList() {
-  const s=requireSess(); if (!s||!s.isSuper) return;
-  let html=`<div class="admin-row"><div class="admin-info"><div class="admin-avatar">⭐</div><div><div class="admin-uname">${esc(SUPER_USER)}</div><div><span class="badge-super-sm">مدير رئيسي</span></div></div></div></div>`;
+  const cont = document.getElementById('adminListContainer');
+  let html = '';
+  // Super admins (permanent)
+  SUPER_USERS.forEach(u => {
+    html += `<div class="admin-row">
+      <div class="admin-info"><div class="admin-avatar">⭐</div>
+        <div><div class="admin-uname">${esc(SUPER_DISPLAY[u])}</div><div><span class="badge-super-sm">مدير رئيسي</span></div></div>
+      </div>
+    </div>`;
+  });
   if (!admins.length) {
-    html+=`<div style="text-align:center;padding:1.5rem;color:var(--text-muted);font-size:.85rem">لا يوجد مشرفون مضافون بعد</div>`;
+    html += `<div style="text-align:center;padding:1.5rem;color:var(--text-muted);font-size:.85rem">لا يوجد مشرفون مضافون بعد</div>`;
   } else {
     admins.forEach(a => {
-      html+=`<div class="admin-row"><div class="admin-info"><div class="admin-avatar">👤</div><div><div class="admin-uname">${esc(a.username)}</div><div style="font-size:.72rem;color:var(--text-muted)">مشرف</div></div></div><button class="btn-danger-sm" data-uname="${esc(a.username)}" onclick="confirmRemoveAdmin(this.dataset.uname)">✕ حذف</button></div>`;
+      const p = a.permissions||{};
+      const badges = [
+        [p.canInsert,'إضافة'],[p.canDelete,'حذف'],[p.canDeleteAll,'مسح الكل'],
+        [p.canEdit,'تعديل'],[p.canExport,'تصدير']
+      ].map(([v,l])=>`<span class="perm-badge ${v?'on':''}">${l}</span>`).join('');
+      html += `<div class="admin-row">
+        <div class="admin-info"><div class="admin-avatar">👤</div>
+          <div><div class="admin-uname">${esc(a.username)}</div>
+          <div class="perm-badges">${badges}</div></div>
+        </div>
+        <div class="admin-row-actions">
+          <button class="btn-sm" data-u="${esc(a.username)}" onclick="openEditAdminCred(this.dataset.u)">✏️</button>
+          <button class="btn-sm warn" data-u="${esc(a.username)}" onclick="openEditPerm(this.dataset.u)">🔑</button>
+          <button class="btn-sm danger" data-u="${esc(a.username)}" onclick="confirmRemoveAdmin(this.dataset.u)">✕</button>
+        </div>
+      </div>`;
     });
   }
-  document.getElementById('adminListContainer').innerHTML = html;
+  cont.innerHTML = html;
 }
 
 async function addAdmin() {
-  const s=requireSess(); if (!s||!s.isSuper) return;
   const errEl=document.getElementById('addAdminErr'), okEl=document.getElementById('addAdminOk');
   errEl.classList.remove('show'); okEl.classList.remove('show');
   const uname=document.getElementById('newUser').value.trim();
   const pass =document.getElementById('newPass').value;
   const pass2=document.getElementById('newPass2').value;
-  const fail=msg=>{ errEl.textContent=msg; errEl.classList.add('show'); };
-  if (!uname||!pass||!pass2) return fail('⚠️ يرجى تعبئة جميع الحقول');
-  if (uname.length<3) return fail('⚠️ اسم المستخدم يجب أن يكون 3 أحرف على الأقل');
-  if (!/^[\u0600-\u06FFa-zA-Z0-9_]{3,40}$/.test(uname)) return fail('⚠️ اسم المستخدم يحتوي على رموز غير مسموح بها');
-  if (uname===SUPER_USER) return fail('⚠️ اسم المستخدم هذا محجوز');
-  if (admins.find(a=>a.username===uname)) return fail('⚠️ اسم المستخدم مستخدم بالفعل');
-  if (pass.length<8) return fail('⚠️ كلمة المرور يجب أن تكون 8 أحرف على الأقل');
-  if (pass!==pass2) return fail('⚠️ كلمتا المرور غير متطابقتين');
-  const hash=await sha256(pass);
-  admins.push({username:uname,passwordHash:hash});
+  const fail=msg=>{errEl.textContent=msg;errEl.classList.add('show');};
+  if(!uname||!pass||!pass2)return fail('⚠️ يرجى تعبئة جميع الحقول');
+  if(uname.length<3)return fail('⚠️ اسم المستخدم يجب أن يكون 3 أحرف على الأقل');
+  if(!/^[\u0600-\u06FFa-zA-Z0-9_.]{3,40}$/.test(uname))return fail('⚠️ اسم المستخدم يحتوي على رموز غير مسموح بها');
+  if(SUPER_USERS.includes(uname.toLowerCase()))return fail('⚠️ اسم المستخدم هذا محجوز');
+  if(admins.find(a=>a.username.toLowerCase()===uname.toLowerCase()))return fail('⚠️ اسم المستخدم مستخدم بالفعل');
+  if(pass.length<8)return fail('⚠️ كلمة المرور يجب أن تكون 8 أحرف على الأقل');
+  if(pass!==pass2)return fail('⚠️ كلمتا المرور غير متطابقتين');
+  const perms = {
+    canInsert:  document.getElementById('pIns').checked,
+    canDelete:  document.getElementById('pDel').checked,
+    canDeleteAll:document.getElementById('pDelAll').checked,
+    canEdit:    document.getElementById('pEdit').checked,
+    canExport:  document.getElementById('pExp').checked
+  };
+  admins.push({username:uname, passwordHash:await sha256(pass), permissions:perms});
   await saveAdmins(); renderAdminList();
-  document.getElementById('newUser').value=''; document.getElementById('newPass').value=''; document.getElementById('newPass2').value='';
+  ['newUser','newPass','newPass2'].forEach(id=>document.getElementById(id).value='');
+  ['pIns','pDel','pDelAll','pEdit','pExp'].forEach(id=>document.getElementById(id).checked=false);
   document.getElementById('pwBar').className='pw-strength'; document.getElementById('pwLabel').textContent='';
   okEl.textContent=`✅ تم إضافة المشرف "${esc(uname)}" بنجاح`; okEl.classList.add('show');
   setTimeout(()=>okEl.classList.remove('show'),4000);
@@ -991,130 +936,489 @@ async function addAdmin() {
 }
 
 function confirmRemoveAdmin(uname) {
-  const s=requireSess(); if (!s||!s.isSuper) return;
+  const s=requireSess(); if(!s||!s.isSuper)return;
   openModal('حذف مشرف',`هل أنت متأكد من حذف حساب المشرف "<strong>${esc(uname)}</strong>"؟`,
     async()=>{ admins=admins.filter(a=>a.username!==uname); await saveAdmins(); renderAdminList(); showToast(`🗑️ تم حذف المشرف ${esc(uname)}`); }
   );
 }
 
-function pwStrength(pw) {
-  const bar=document.getElementById('pwBar'),lbl=document.getElementById('pwLabel');
-  if (!pw){bar.className='pw-strength';lbl.textContent='';return;}
-  let sc=0;
-  if(pw.length>=8)sc++; if(pw.length>=12)sc++;
-  if(/[A-Z]/.test(pw)&&/[a-z]/.test(pw))sc++;
-  if(/[0-9]/.test(pw)&&/[^a-zA-Z0-9]/.test(pw))sc++;
-  const cls=['','pw-s1','pw-s2','pw-s3','pw-s4'],names=['','ضعيفة جداً','ضعيفة','متوسطة','قوية'],cols=['','var(--red)','#e67e22','#f1c40f','var(--green)'];
-  const idx=Math.max(1,Math.min(sc,4));
-  bar.className='pw-strength '+cls[idx]; lbl.textContent='قوة كلمة المرور: '+names[idx]; lbl.style.color=cols[idx];
+// Edit admin credentials
+function openEditAdminCred(uname) {
+  document.getElementById('editAdminOld').value  = uname;
+  document.getElementById('editAdminUser').value = uname;
+  document.getElementById('editAdminPass').value = '';
+  document.getElementById('eaBar').className = 'pw-strength';
+  document.getElementById('eaLabel').textContent = 'اتركها فارغة إذا لم تريد تغييرها';
+  document.getElementById('editAdminErr').classList.remove('show');
+  document.getElementById('editAdminCredModal').classList.add('show');
+}
+function closeEditAdminCred() { document.getElementById('editAdminCredModal').classList.remove('show'); }
+async function saveAdminCred() {
+  const errEl=document.getElementById('editAdminErr'); errEl.classList.remove('show');
+  const oldU  = document.getElementById('editAdminOld').value;
+  const newU  = document.getElementById('editAdminUser').value.trim();
+  const newP  = document.getElementById('editAdminPass').value;
+  const fail  = msg=>{ errEl.textContent=msg; errEl.classList.add('show'); };
+  if(!newU) return fail('⚠️ اسم المستخدم لا يمكن أن يكون فارغاً');
+  if(newU.length<3) return fail('⚠️ اسم المستخدم يجب أن يكون 3 أحرف على الأقل');
+  if(SUPER_USERS.includes(newU.toLowerCase())) return fail('⚠️ اسم المستخدم هذا محجوز');
+  if(newU!==oldU && admins.find(a=>a.username.toLowerCase()===newU.toLowerCase())) return fail('⚠️ اسم المستخدم مستخدم بالفعل');
+  if(newP && newP.length<8) return fail('⚠️ كلمة المرور يجب أن تكون 8 أحرف على الأقل');
+  const idx = admins.findIndex(a=>a.username===oldU);
+  if(idx===-1) return fail('⚠️ لم يتم العثور على المشرف');
+  admins[idx].username = newU;
+  if(newP) admins[idx].passwordHash = await sha256(newP);
+  await saveAdmins(); renderAdminList(); closeEditAdminCred();
+  showToast('✅ تم تحديث بيانات المشرف');
+}
+
+// Edit admin permissions
+function openEditPerm(uname) {
+  const a = admins.find(x=>x.username===uname); if(!a) return;
+  document.getElementById('editPermUser').value = uname;
+  document.getElementById('editPermName').textContent = uname;
+  document.getElementById('ep_ins').checked    = !!a.permissions?.canInsert;
+  document.getElementById('ep_del').checked    = !!a.permissions?.canDelete;
+  document.getElementById('ep_delAll').checked = !!a.permissions?.canDeleteAll;
+  document.getElementById('ep_edit').checked   = !!a.permissions?.canEdit;
+  document.getElementById('ep_exp').checked    = !!a.permissions?.canExport;
+  document.getElementById('editPermErr').classList.remove('show');
+  document.getElementById('editPermModal').classList.add('show');
+}
+function closeEditPerm() { document.getElementById('editPermModal').classList.remove('show'); }
+async function saveAdminPerms() {
+  const uname = document.getElementById('editPermUser').value;
+  const idx   = admins.findIndex(a=>a.username===uname);
+  if(idx===-1){ document.getElementById('editPermErr').textContent='⚠️ خطأ'; document.getElementById('editPermErr').classList.add('show'); return; }
+  admins[idx].permissions = {
+    canInsert:   document.getElementById('ep_ins').checked,
+    canDelete:   document.getElementById('ep_del').checked,
+    canDeleteAll:document.getElementById('ep_delAll').checked,
+    canEdit:     document.getElementById('ep_edit').checked,
+    canExport:   document.getElementById('ep_exp').checked
+  };
+  await saveAdmins(); renderAdminList(); closeEditPerm();
+  showToast('✅ تم تحديث الصلاحيات');
 }
 
 /* ═══════════════════════════════════════════════
-   CONFLICT MODAL
+   BARBERS
 ═══════════════════════════════════════════════ */
-function closeConflict() {
-  document.getElementById('conflictBg').classList.remove('show');
-  _pendingEntry=null; document.getElementById('fTime').focus();
+async function loadBarbers() {
+  try {
+    const d = await fsGet('barbers');
+    if (d && (d.branch1||d.branch2)) { barbers=d; return; }
+  } catch(e) {}
+  // First run — use defaults
+  barbers = JSON.parse(JSON.stringify(DEFAULT_BARBERS));
+  try { await fsSet('barbers', barbers); } catch(e) {}
 }
-document.getElementById('conflictSaveBtn').addEventListener('click', async()=>{
-  if (_pendingEntry) { document.getElementById('conflictBg').classList.remove('show'); await commitEntry(_pendingEntry); _pendingEntry=null; }
+async function saveBarbers() { await fsSet('barbers', barbers); }
+
+function renderBarberList() {
+  ['branch1','branch2'].forEach(br => {
+    const cont = document.getElementById('barberList_'+br);
+    if (!barbers[br]||!barbers[br].length) { cont.innerHTML='<div class="barbers-empty">لا يوجد حلاقون</div>'; return; }
+    const otherBr = br==='branch1'?'branch2':'branch1';
+    const otherLabel = BRANCH_LABELS[otherBr];
+    cont.innerHTML = barbers[br].map(name => `
+      <div class="barber-item">
+        <span class="barber-name">${esc(name)}</span>
+        <div class="barber-item-actions">
+          <button class="btn-sm warn" data-name="${esc(name)}" data-from="${br}" data-to="${otherBr}"
+            onclick="confirmTransferBarber(this.dataset.name,this.dataset.from,this.dataset.to,'${esc(otherLabel)}')">
+            ⇄ نقل
+          </button>
+          <button class="btn-sm danger" data-name="${esc(name)}" data-br="${br}"
+            onclick="confirmDeleteBarber(this.dataset.name,this.dataset.br)">
+            ✕
+          </button>
+        </div>
+      </div>`).join('');
+  });
+}
+
+let _addBarberBranch = '';
+function openAddBarberModal(branch) {
+  _addBarberBranch = branch;
+  document.getElementById('addBarberBranch').value = branch;
+  document.getElementById('addBarberBranchLabel').textContent = `الفرع: ${BRANCH_LABELS[branch]}`;
+  document.getElementById('addBarberName').value = '';
+  document.getElementById('addBarberErr').classList.remove('show');
+  document.getElementById('addBarberModal').classList.add('show');
+  setTimeout(()=>document.getElementById('addBarberName').focus(), 100);
+}
+function closeAddBarber() { document.getElementById('addBarberModal').classList.remove('show'); }
+async function doAddBarber() {
+  const errEl = document.getElementById('addBarberErr'); errEl.classList.remove('show');
+  const name  = document.getElementById('addBarberName').value.trim();
+  const branch= document.getElementById('addBarberBranch').value;
+  if (!name) { errEl.textContent='⚠️ أدخل اسم الحلاق'; errEl.classList.add('show'); return; }
+  if (barbers[branch]?.includes(name)) { errEl.textContent='⚠️ الحلاق موجود بالفعل في هذا الفرع'; errEl.classList.add('show'); return; }
+  if (!barbers[branch]) barbers[branch] = [];
+  barbers[branch].push(name);
+  await saveBarbers(); renderBarberList(); closeAddBarber();
+  showToast(`✅ تمت إضافة الحلاق ${esc(name)}`);
+}
+
+function confirmDeleteBarber(name, branch) {
+  openModal('حذف حلاق', `هل أنت متأكد من حذف الحلاق "<strong>${esc(name)}</strong>" من ${BRANCH_LABELS[branch]}؟`,
+    async () => {
+      barbers[branch] = barbers[branch].filter(n=>n!==name);
+      await saveBarbers(); renderBarberList();
+      showToast(`🗑️ تم حذف الحلاق ${esc(name)}`);
+    }
+  );
+}
+
+function confirmTransferBarber(name, fromBr, toBr, toLabel) {
+  openModal('نقل حلاق', `هل تريد نقل الحلاق "<strong>${esc(name)}</strong>" إلى ${toLabel}؟`,
+    async () => {
+      barbers[fromBr] = barbers[fromBr].filter(n=>n!==name);
+      if (!barbers[toBr]) barbers[toBr] = [];
+      if (!barbers[toBr].includes(name)) barbers[toBr].push(name);
+      await saveBarbers(); renderBarberList();
+      showToast(`✅ تم نقل الحلاق ${esc(name)} إلى ${toLabel}`);
+    }
+  );
+}
+
+/* ═══════════════════════════════════════════════
+   BRANCH / BARBER DROPDOWN
+═══════════════════════════════════════════════ */
+function onBranchChange(branchId, barberId) {
+  const branch = document.getElementById(branchId).value;
+  const sel    = document.getElementById(barberId);
+  sel.innerHTML = '<option value="" disabled selected>اختر الحلاق</option>';
+  if (branch && barbers[branch]?.length) {
+    barbers[branch].forEach(name => {
+      const o=document.createElement('option'); o.value=name; o.textContent=name; sel.appendChild(o);
+    });
+    sel.disabled = false;
+  } else {
+    sel.innerHTML = '<option value="" disabled selected>اختر الفرع أولاً</option>';
+    sel.disabled  = true;
+  }
+  sel.value = ''; sel.classList.remove('invalid');
+}
+
+/* ═══════════════════════════════════════════════
+   CHANGE OWN PASSWORD
+═══════════════════════════════════════════════ */
+async function changeOwnPassword() {
+  const errEl=document.getElementById('cpErr'), okEl=document.getElementById('cpOk');
+  errEl.classList.remove('show'); okEl.classList.remove('show');
+  const sess = requireSess(); if(!sess) return;
+  const cur  = document.getElementById('cpCur').value.trim();
+  const nw   = document.getElementById('cpNew').value;
+  const conf = document.getElementById('cpConf').value;
+  const fail = msg=>{ errEl.textContent=msg; errEl.classList.add('show'); };
+  if(!cur||!nw||!conf) return fail('⚠️ يرجى تعبئة جميع الحقول');
+  if(nw.length<8) return fail('⚠️ كلمة المرور الجديدة يجب أن تكون 8 أحرف على الأقل');
+  if(nw!==conf) return fail('⚠️ كلمتا المرور غير متطابقتين');
+  const curHash = await sha256(cur);
+  const newHash = await sha256(nw);
+  const u = sess.username;
+  if (sess.isSuper) {
+    if (curHash !== superHashes[u]) return fail('❌ كلمة المرور الحالية غير صحيحة');
+    superHashes[u] = newHash;
+    await fsSet('superadmins', superHashes);
+  } else {
+    const idx = admins.findIndex(a=>a.username.toLowerCase()===u);
+    if(idx===-1||admins[idx].passwordHash!==curHash) return fail('❌ كلمة المرور الحالية غير صحيحة');
+    admins[idx].passwordHash = newHash;
+    await saveAdmins();
+  }
+  ['cpCur','cpNew','cpConf'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('cpBar').className='pw-strength'; document.getElementById('cpLabel').textContent='';
+  okEl.textContent='✅ تم تغيير كلمة المرور بنجاح'; okEl.classList.add('show');
+  setTimeout(()=>okEl.classList.remove('show'),4000);
+  showToast('✅ تم تغيير كلمة المرور');
+}
+
+/* ═══════════════════════════════════════════════
+   TIME CONFLICT
+═══════════════════════════════════════════════ */
+const SLOT_MIN = 30;
+function timeToMins(hhmm){ const [h,m]=hhmm.split(':').map(Number); return h*60+m; }
+function findConflict(barber, date, timeRaw, excludeSeq=null) {
+  const nm = timeToMins(timeRaw);
+  return customers.find(c =>
+    c.seq !== excludeSeq && c.barber===barber && c.date===date && c.timeRaw &&
+    Math.abs(timeToMins(c.timeRaw)-nm) < SLOT_MIN
+  ) || null;
+}
+
+/* ═══════════════════════════════════════════════
+   CUSTOMER DATA
+═══════════════════════════════════════════════ */
+async function persist() { await fsSet('customers', {list:customers, nextSeq}); }
+function updateSeq() { document.getElementById('seqDisplay').textContent='#'+String(nextSeq).padStart(3,'0'); }
+function to12h(v){ if(!v)return''; const[h,m]=v.split(':').map(Number); return `${h%12||12}:${String(m).padStart(2,'0')} ${h>=12?'م':'ص'}`; }
+function fmtDate(iso){ if(!iso)return''; const[y,mo,d]=iso.split('-'); return`${d}/${mo}/${y}`; }
+function isoFromFmt(fmt){ if(!fmt)return''; const[d,mo,y]=fmt.split('/'); return`${y}-${mo}-${d}`; }
+function todayISO(){ return new Date().toISOString().split('T')[0]; }
+
+async function saveEntry() {
+  if (!hasPerm('canInsert')) { showToast('🔒 ليس لديك صلاحية إضافة عملاء','var(--red)'); return; }
+  const name  =document.getElementById('fName').value.trim();
+  const phone =document.getElementById('fPhone').value.trim();
+  const date  =document.getElementById('fDate').value;
+  const time  =document.getElementById('fTime').value;
+  const pkg   =document.getElementById('fPackage').value;
+  const branch=document.getElementById('fBranch').value;
+  const barber=document.getElementById('fBarber').value;
+  let ok=true;
+  const v=(id,cond)=>{const el=document.getElementById(id);cond?el.classList.remove('invalid'):el.classList.add('invalid');if(!cond)ok=false;};
+  v('fName',name.length>0); v('fPhone',phone.length>=7&&phone.length<=10);
+  v('fDate',date.length>0); v('fTime',time.length>0); v('fPackage',pkg.length>0);
+  v('fBranch',branch.length>0); v('fBarber',barber.length>0);
+  if(phone.length>0&&phone.length<7) showPhHint('رقم الجوال قصير جداً',true);
+  if(!ok){showToast('⚠️ يرجى تعبئة جميع الحقول','var(--red)');return;}
+  const dateFmt=fmtDate(date), branchLabel=BRANCH_LABELS[branch]||branch;
+  const entry={seq:nextSeq,name,phone,date:dateFmt,timeRaw:time,time:to12h(time),package:pkg,branchKey:branch,branch:branchLabel,barber};
+  const conflict=findConflict(barber,dateFmt,time);
+  if(conflict){
+    _pendingEntry=entry;
+    const diff=Math.abs(timeToMins(conflict.timeRaw||'00:00')-timeToMins(time));
+    document.getElementById('conflictMsg').innerHTML=
+      `الحلاق <strong>${esc(barber)}</strong> (${esc(branchLabel)}) لديه موعد في:<br>
+       <span style="color:var(--gold)">📅 ${esc(conflict.date)} &nbsp; 🕐 ${esc(conflict.time)}</span><br><br>
+       الفرق: <strong>${diff} دقيقة</strong> — أقل من مدة الحلاقة (30 دقيقة).`;
+    document.getElementById('conflictBg').classList.add('show'); return;
+  }
+  await commitEntry(entry);
+}
+
+async function commitEntry(entry) {
+  customers.push(entry); nextSeq++;
+  await persist(); clearForm();
+  showToast('✅ تم حفظ بيانات العميل بنجاح');
+}
+
+function clearForm() {
+  ['fName','fPhone','fTime'].forEach(id=>{const el=document.getElementById(id);el.value='';el.classList.remove('invalid');});
+  document.getElementById('fPackage').value=''; document.getElementById('fPackage').classList.remove('invalid');
+  document.getElementById('fBranch').value='';  document.getElementById('fBranch').classList.remove('invalid');
+  const bs=document.getElementById('fBarber');
+  bs.innerHTML='<option value="" disabled selected>اختر الفرع أولاً</option>'; bs.disabled=true; bs.classList.remove('invalid');
+  document.getElementById('fDate').value=todayISO(); document.getElementById('fDate').classList.remove('invalid');
+  showPhHint('أرقام فقط \u2022 10 خانات كحد أقصى',false);
+  document.getElementById('fName').focus();
+}
+function showPhHint(msg,isErr){const h=document.getElementById('phoneHint');h.textContent=msg;isErr?h.classList.add('err'):h.classList.remove('err');}
+
+/* ═══════════════════════════════════════════════
+   TABLE RENDER
+═══════════════════════════════════════════════ */
+function renderTable() {
+  const tbody=document.getElementById('tableBody'), empty=document.getElementById('emptyState');
+  document.getElementById('countBadge').textContent=customers.length+' عميل';
+  if(!customers.length){tbody.innerHTML='';empty.style.display='block';return;}
+  empty.style.display='none';
+  const canEdit=hasPerm('canEdit'), canDel=hasPerm('canDelete');
+  tbody.innerHTML=customers.map((c,i)=>{
+    const actions=[];
+    if(canEdit) actions.push(`<button class="btn-sm" data-seq="${c.seq}" onclick="openEditResv(${c.seq})">✏️</button>`);
+    if(canDel)  actions.push(`<button class="btn-sm danger" data-seq="${c.seq}" onclick="confirmDel(${c.seq})">✕</button>`);
+    return `<tr class="${i===customers.length-1?'row-new':''}">
+      <td class="td-seq">#${String(c.seq).padStart(3,'0')}</td>
+      <td>${esc(c.name)}</td>
+      <td dir="ltr" style="text-align:right">${esc(c.phone)}</td>
+      <td class="td-date">${esc(c.date||'')}</td>
+      <td class="td-time">${esc(c.time)}</td>
+      <td><span class="td-pkg">الباقة ${esc(c.package)}</span></td>
+      <td class="td-branch">${esc(c.branch||'')}</td>
+      <td>${esc(c.barber)}</td>
+      <td><div class="row-actions">${actions.join('')}</div></td>
+    </tr>`;
+  }).join('');
+}
+
+/* ═══════════════════════════════════════════════
+   EDIT RESERVATION
+═══════════════════════════════════════════════ */
+function openEditResv(seq) {
+  if(!hasPerm('canEdit')){showToast('🔒 ليس لديك صلاحية التعديل','var(--red)');return;}
+  const c=customers.find(x=>x.seq===seq); if(!c)return;
+  _editingSeq=seq;
+  document.getElementById('eName').value   = c.name;
+  document.getElementById('ePhone').value  = c.phone;
+  document.getElementById('eDate').value   = isoFromFmt(c.date);
+  document.getElementById('eTime').value   = c.timeRaw||'';
+  document.getElementById('ePackage').value= c.package;
+  const brKey = c.branchKey || Object.entries(BRANCH_LABELS).find(([k,v])=>v===c.branch)?.[0] || 'branch1';
+  document.getElementById('eBranch').value = brKey;
+  onBranchChange('eBranch','eBarber');
+  document.getElementById('eBarber').value = c.barber;
+  document.getElementById('editResvErr').classList.remove('show');
+  document.getElementById('editResvModal').classList.add('show');
+}
+function closeEditResv(){document.getElementById('editResvModal').classList.remove('show');_editingSeq=null;}
+async function saveEditResv(){
+  const errEl=document.getElementById('editResvErr'); errEl.classList.remove('show');
+  if(_editingSeq===null)return;
+  const name  =document.getElementById('eName').value.trim();
+  const phone =document.getElementById('ePhone').value.trim();
+  const date  =document.getElementById('eDate').value;
+  const time  =document.getElementById('eTime').value;
+  const pkg   =document.getElementById('ePackage').value;
+  const branch=document.getElementById('eBranch').value;
+  const barber=document.getElementById('eBarber').value;
+  if(!name||!phone||!date||!time||!pkg||!branch||!barber){errEl.textContent='⚠️ يرجى تعبئة جميع الحقول';errEl.classList.add('show');return;}
+  const dateFmt=fmtDate(date);
+  const conflict=findConflict(barber,dateFmt,time,_editingSeq);
+  if(conflict){errEl.textContent=`⚠️ الحلاق ${esc(barber)} لديه موعد قريب: ${esc(conflict.time)} — الفرق أقل من 30 دقيقة.`;errEl.classList.add('show');return;}
+  const idx=customers.findIndex(x=>x.seq===_editingSeq); if(idx===-1)return;
+  customers[idx]={...customers[idx],name,phone,date:dateFmt,timeRaw:time,time:to12h(time),package:pkg,branchKey:branch,branch:BRANCH_LABELS[branch]||branch,barber};
+  await persist(); closeEditResv();
+  showToast('✅ تم تحديث بيانات الحجز');
+}
+
+/* ═══════════════════════════════════════════════
+   DELETE / CLEAR
+═══════════════════════════════════════════════ */
+function confirmDel(seq){
+  if(!hasPerm('canDelete')){showToast('🔒 ليس لديك صلاحية الحذف','var(--red)');return;}
+  const c=customers.find(x=>x.seq===seq);if(!c)return;
+  openModal('حذف عميل',`هل أنت متأكد من حذف بيانات "<strong>${esc(c.name)}</strong>"؟`,
+    async()=>{customers=customers.filter(x=>x.seq!==seq);await persist();showToast('🗑️ تم حذف بيانات العميل');}
+  );
+}
+function confirmClearAll(){
+  if(!hasPerm('canDeleteAll')){showToast('🔒 ليس لديك صلاحية مسح الكل','var(--red)');return;}
+  if(!customers.length){showToast('⚠️ لا توجد بيانات','var(--red)');return;}
+  openModal('مسح جميع البيانات','هل أنت متأكد من مسح <strong>جميع</strong> بيانات العملاء؟ لا يمكن التراجع.',
+    async()=>{customers=[];nextSeq=1;await persist();showToast('🗑️ تم مسح جميع البيانات');}
+  );
+}
+function exportCSV(){
+  if(!hasPerm('canExport')){showToast('🔒 ليس لديك صلاحية التصدير','var(--red)');return;}
+  if(!customers.length){showToast('⚠️ لا توجد بيانات','var(--red)');return;}
+  const h=['رقم التسلسل','اسم العميل','رقم الجوال','التاريخ','الوقت','نوع الباقة','الفرع','اسم الحلاق'];
+  const rows=customers.map(c=>['#'+String(c.seq).padStart(3,'0'),c.name,c.phone,c.date||'',c.time,'الباقة '+c.package,c.branch||'',c.barber]);
+  const csv='\uFEFF'+[h,...rows].map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8;'}));
+  a.download='HanAlwaad_customers.csv';a.click();URL.revokeObjectURL(a.href);
+}
+
+/* ═══════════════════════════════════════════════
+   MODALS
+═══════════════════════════════════════════════ */
+// Conflict
+function closeConflict(){document.getElementById('conflictBg').classList.remove('show');_pendingEntry=null;document.getElementById('fTime').focus();}
+document.getElementById('conflictSaveBtn').addEventListener('click',async()=>{
+  if(_pendingEntry){document.getElementById('conflictBg').classList.remove('show');await commitEntry(_pendingEntry);_pendingEntry=null;}
 });
-document.getElementById('conflictBg').addEventListener('click', e=>{ if(e.target===e.currentTarget)closeConflict(); });
+document.getElementById('conflictBg').addEventListener('click',e=>{if(e.target===e.currentTarget)closeConflict();});
 
-/* ═══════════════════════════════════════════════
-   CONFIRM MODAL
-═══════════════════════════════════════════════ */
+// Confirm
 let _modalCb=null;
-function openModal(title,msg,cb) {
-  document.getElementById('modalTitle').textContent=title;
-  document.getElementById('modalMsg').innerHTML=msg;
-  _modalCb=cb; document.getElementById('modalBg').classList.add('show');
-}
-function closeModal(){ document.getElementById('modalBg').classList.remove('show'); _modalCb=null; }
-document.getElementById('modalOk').addEventListener('click', async()=>{ if(_modalCb)await _modalCb(); closeModal(); });
-document.getElementById('modalBg').addEventListener('click', e=>{ if(e.target===e.currentTarget)closeModal(); });
+function openModal(title,msg,cb){document.getElementById('modalTitle').textContent=title;document.getElementById('modalMsg').innerHTML=msg;_modalCb=cb;document.getElementById('modalBg').classList.add('show');}
+function closeModal(){document.getElementById('modalBg').classList.remove('show');_modalCb=null;}
+document.getElementById('modalOk').addEventListener('click',async()=>{if(_modalCb)await _modalCb();closeModal();});
+document.getElementById('modalBg').addEventListener('click',e=>{if(e.target===e.currentTarget)closeModal();});
+
+// Edit modal close on backdrop
+document.getElementById('editResvModal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeEditResv();});
+document.getElementById('editAdminCredModal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeEditAdminCred();});
+document.getElementById('editPermModal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeEditPerm();});
+document.getElementById('addBarberModal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeAddBarber();});
 
 /* ═══════════════════════════════════════════════
    TOAST
 ═══════════════════════════════════════════════ */
 let _toastT;
 function showToast(msg,color){
-  const t=document.getElementById('toast');
-  t.textContent=msg; t.style.borderColor=color||'var(--green)'; t.style.color=color||'var(--green)';
-  t.classList.add('show'); clearTimeout(_toastT); _toastT=setTimeout(()=>t.classList.remove('show'),3000);
+  const t=document.getElementById('toast');t.textContent=msg;
+  t.style.borderColor=color||'var(--green)';t.style.color=color||'var(--green)';
+  t.classList.add('show');clearTimeout(_toastT);_toastT=setTimeout(()=>t.classList.remove('show'),3000);
 }
 
 /* ═══════════════════════════════════════════════
    SCREEN ROUTER
 ═══════════════════════════════════════════════ */
-function showScreen(id){
-  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
+function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');}
+
+/* ═══════════════════════════════════════════════
+   XSS
+═══════════════════════════════════════════════ */
+function esc(str){return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+
+/* ═══════════════════════════════════════════════
+   PASSWORD STRENGTH
+═══════════════════════════════════════════════ */
+function pwStr(pw,barId,lblId){
+  const bar=document.getElementById(barId),lbl=document.getElementById(lblId);
+  if(!pw){bar.className='pw-strength';lbl.textContent='';return;}
+  let sc=0;if(pw.length>=8)sc++;if(pw.length>=12)sc++;if(/[A-Z]/.test(pw)&&/[a-z]/.test(pw))sc++;if(/[0-9]/.test(pw)&&/[^a-zA-Z0-9]/.test(pw))sc++;
+  const cls=['','pw-s1','pw-s2','pw-s3','pw-s4'],names=['','ضعيفة جداً','ضعيفة','متوسطة','قوية'],cols=['','var(--red)','var(--orange)','#f1c40f','var(--green)'];
+  const i=Math.max(1,Math.min(sc,4));bar.className='pw-strength '+cls[i];lbl.textContent='قوة كلمة المرور: '+names[i];lbl.style.color=cols[i];
 }
 
 /* ═══════════════════════════════════════════════
-   XSS SANITIZATION
+   PHONE INPUT
 ═══════════════════════════════════════════════ */
-function esc(str){
-  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
-}
-
-/* ═══════════════════════════════════════════════
-   PHONE INPUT — digits only, max 10
-═══════════════════════════════════════════════ */
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded',()=>{
   const ph=document.getElementById('fPhone');
   ph.addEventListener('input',()=>{
-    let v=ph.value.replace(/\D/g,''); if(v.length>10)v=v.slice(0,10); ph.value=v;
+    let v=ph.value.replace(/\D/g,'');if(v.length>10)v=v.slice(0,10);ph.value=v;
     showPhHint(v.length?`${v.length} / 10 أرقام`:'أرقام فقط \u2022 10 خانات كحد أقصى',false);
   });
   ph.addEventListener('keydown',e=>{
     const allow=['Backspace','Delete','Tab','Escape','Enter','ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Home','End'];
-    if(allow.includes(e.key))return;
-    if((e.ctrlKey||e.metaKey)&&'acvxz'.includes(e.key.toLowerCase()))return;
+    if(allow.includes(e.key))return;if((e.ctrlKey||e.metaKey)&&'acvxz'.includes(e.key.toLowerCase()))return;
     if(!/^\d$/.test(e.key))e.preventDefault();
   });
   ph.addEventListener('paste',e=>{
-    e.preventDefault();
-    const txt=(e.clipboardData||window.clipboardData).getData('text');
-    let v=txt.replace(/\D/g,'').slice(0,10); ph.value=v;
+    e.preventDefault();const txt=(e.clipboardData||window.clipboardData).getData('text');
+    let v=txt.replace(/\D/g,'').slice(0,10);ph.value=v;
     showPhHint(v.length?`${v.length} / 10 أرقام`:'أرقام فقط \u2022 10 خانات كحد أقصى',false);
+  });
+  // Same for edit phone
+  const eph=document.getElementById('ePhone');
+  eph.addEventListener('input',()=>{let v=eph.value.replace(/\D/g,'');if(v.length>10)v=v.slice(0,10);eph.value=v;});
+  eph.addEventListener('keydown',e=>{
+    const allow=['Backspace','Delete','Tab','Escape','Enter','ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Home','End'];
+    if(allow.includes(e.key))return;if((e.ctrlKey||e.metaKey)&&'acvxz'.includes(e.key.toLowerCase()))return;
+    if(!/^\d$/.test(e.key))e.preventDefault();
   });
 });
 
 /* ═══════════════════════════════════════════════
-   BOOT — check saved Firebase config
+   BOOT
 ═══════════════════════════════════════════════ */
-async function bootApp() {
-  SUPER_HASH = await sha256(SUPER_PASS_RAW);
+const _loginBtn = document.getElementById('loginBtn');
+_loginBtn.disabled = true;
+_loginBtn.textContent = 'جاري التحميل...';
+
+(async () => {
+  // Init Firebase
+  try { initFirebase(FIREBASE_CONFIG); } catch(e) { console.warn('Firebase:', e); }
+
+  // Load super admin hashes (and init defaults on first run)
+  await initSuperAdmins();
+
+  // Load barbers (needed for dropdowns if session is restored)
+  try { await loadBarbers(); } catch(e) {}
+
+  // Re-enable login
+  _loginBtn.disabled = false;
+  _loginBtn.textContent = 'تسجيل الدخول';
 
   if (isLocked()) { showScreen('login'); startLockUI(); return; }
 
+  // Restore session
   const sess = getSession();
   if (sess) {
-    setupUI(sess.username, sess.isSuper);
+    setupUI(sess.isSuper, sess.displayName, sess.permissions);
     startRealtimeSync();
     if (sess.isSuper) {
-      await loadAdmins();
-      renderAdminList();
+      await loadAdmins(); renderAdminList();
+      renderBarberList();
     }
     showScreen('admin');
   }
-}
-
-(async () => {
-  const FIREBASE_CONFIG = {
-    apiKey: "AIzaSyDQCD_dp3J0q8BtvnGOm4TtNKHWTbq9Rk0",
-    authDomain: "han-alwaad.firebaseapp.com",
-    projectId: "han-alwaad",
-    storageBucket: "han-alwaad.firebasestorage.app",
-    messagingSenderId: "1053434776847",
-    appId: "1:1053434776847:web:c7cb6f1d867898b066827a"
-  };
-
-  document.getElementById('setupOverlay').style.display = 'none';
-  initFirebase(FIREBASE_CONFIG);
-  await bootApp();
 })();
 </script>
 </body>
