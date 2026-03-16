@@ -11,6 +11,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&family=Cinzel:wght@400;600;700&display=swap" rel="stylesheet">
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 :root{--gold:#c9a84c;--gold-light:#e8c97a;--gold-dark:#9a7530;--bg-deep:#0a0a0a;--bg-card:#111111;--bg-elevated:#1a1a1a;--bg-input:#141414;--border:#2a2a2a;--border-gold:rgba(201,168,76,0.3);--text-primary:#f0e6d0;--text-secondary:#a09070;--text-muted:#5a5040;--red:#c0392b;--green:#27ae60;--orange:#e67e22}
 *{margin:0;padding:0;box-sizing:border-box}
@@ -200,6 +201,14 @@ tbody td{padding:.8rem 1rem;font-size:.88rem;color:var(--text-primary);text-alig
 .btn-modal-save{padding:.6rem 1.4rem;background:linear-gradient(135deg,var(--gold-dark),var(--gold));border:none;color:var(--bg-deep);font-family:'Tajawal',sans-serif;font-size:.9rem;font-weight:700;cursor:pointer;transition:opacity .2s}
 .btn-modal-save:hover{opacity:.9}
 
+/* EXPORT DROPDOWN */
+.export-wrap{position:relative;display:inline-flex}
+.export-menu{position:absolute;top:calc(100% + 4px);left:0;background:var(--bg-card);border:1px solid var(--border-gold);min-width:160px;z-index:500;display:none;flex-direction:column}
+.export-menu.open{display:flex}
+.export-menu button{padding:.65rem 1rem;background:none;border:none;border-bottom:1px solid var(--border);color:var(--text-secondary);font-family:'Tajawal',sans-serif;font-size:.85rem;cursor:pointer;text-align:right;transition:background .15s,color .15s}
+.export-menu button:last-child{border-bottom:none}
+.export-menu button:hover{background:rgba(201,168,76,.08);color:var(--gold)}
+
 /* TOAST */
 .toast{position:fixed;bottom:2rem;left:50%;transform:translateX(-50%) translateY(80px);background:var(--bg-elevated);border:1px solid var(--green);color:var(--green);padding:.75rem 1.5rem;font-size:.9rem;font-weight:600;z-index:10000;transition:transform .4s cubic-bezier(.34,1.56,.64,1);display:flex;align-items:center;gap:.5rem;white-space:nowrap;max-width:92vw}
 .toast.show{transform:translateX(-50%) translateY(0)}
@@ -370,7 +379,14 @@ tbody td{padding:.8rem 1rem;font-size:.88rem;color:var(--text-primary);text-alig
           <h3>قائمة العملاء</h3>
           <div class="tbl-actions">
             <button class="btn-icon" id="btnPrint"     onclick="window.print()">🖨️ طباعة</button>
-            <button class="btn-icon" id="btnExport"    onclick="exportCSV()">⬇️ تصدير CSV</button>
+            <div class="export-wrap" id="exportWrap">
+              <button class="btn-icon" id="btnExport" onclick="toggleExportMenu(event)">⬇️ تحميل كملف ▾</button>
+              <div class="export-menu" id="exportMenu">
+                <button onclick="doExport('csv');  closeExportMenu()">📄 CSV</button>
+                <button onclick="doExport('excel');closeExportMenu()">📊 Excel</button>
+                <button onclick="doExport('word'); closeExportMenu()">📝 Word</button>
+              </div>
+            </div>
             <button class="btn-icon" id="btnClearAll"  style="border-color:#3a1a1a;color:#c0392b" onclick="confirmClearAll()">🗑 مسح الكل</button>
           </div>
         </div>
@@ -659,7 +675,11 @@ const LOCK_KEY       = '__hhan_lock__';
 // Super admin usernames (always lowercase for comparison)
 const SUPER_USERS = ['mohammed.m', 'abdullah.m'];
 const SUPER_DISPLAY = { 'mohammed.m': 'Mohammed.m', 'abdullah.m': 'Abdullah.m' };
-const SUPER_PASS_DEFAULTS = { 'mohammed.m': 'M0556466605', 'abdullah.m': 'A0555441146' };
+// Pre-computed SHA-256 hashes — plain text passwords are NOT stored here
+const SUPER_PASS_HASHES = {
+  'mohammed.m': 'c5debc6627a2d02e95750728291259a8adabf16677a1479d278995dec6941b95',
+  'abdullah.m': 'c9e6b83f998c492c7751c52d313c2474f04567c07de4016c4af3a37673735e75'
+};
 
 const BRANCH_LABELS = { branch1: 'الفرع الأول', branch2: 'الفرع الثاني' };
 const DEFAULT_BARBERS = {
@@ -712,12 +732,11 @@ async function fsSet(name, data) { await docRef(name).set(data); }
 async function initSuperAdmins() {
   try {
     const d = await fsGet('superadmins');
+    // If Firebase has stored hashes (e.g. after a password change), use those
     if (d && SUPER_USERS.every(u => d[u])) { superHashes = d; return; }
   } catch(e) {}
-  // First run or Firestore unavailable — use defaults
-  for (const [u, p] of Object.entries(SUPER_PASS_DEFAULTS)) {
-    superHashes[u] = await sha256(p);
-  }
+  // Use pre-computed hashes — no plain text passwords in code
+  superHashes = { ...SUPER_PASS_HASHES };
   try { await fsSet('superadmins', superHashes); } catch(e) {}
 }
 
@@ -1292,14 +1311,81 @@ function confirmClearAll(){
     async()=>{customers=[];nextSeq=1;await persist();showToast('🗑️ تم مسح جميع البيانات');}
   );
 }
-function exportCSV(){
+function toggleExportMenu(e){e.stopPropagation();document.getElementById('exportMenu').classList.toggle('open');}
+function closeExportMenu(){document.getElementById('exportMenu').classList.remove('open');}
+document.addEventListener('click',()=>closeExportMenu());
+
+function getSortedRows(){
+  // Sort by date then time
+  const sorted=[...customers].sort((a,b)=>{
+    const da=a.date||'', db=b.date||'';
+    if(da!==db){
+      // Convert dd/mm/yyyy to yyyy-mm-dd for comparison
+      const toISO=s=>s?s.split('/').reverse().join('-'):'';
+      if(toISO(da)<toISO(db))return -1; if(toISO(da)>toISO(db))return 1;
+    }
+    const ta=a.timeRaw||'00:00', tb=b.timeRaw||'00:00';
+    return ta<tb?-1:ta>tb?1:0;
+  });
+  return sorted;
+}
+
+function getExportData(){
+  const headers=['رقم التسلسل','اسم العميل','رقم الجوال','التاريخ','الوقت','نوع الباقة','الفرع','اسم الحلاق'];
+  const rows=getSortedRows().map(c=>[
+    '#'+String(c.seq).padStart(3,'0'),c.name,c.phone,c.date||'',c.time,'الباقة '+c.package,c.branch||'',c.barber
+  ]);
+  return {headers,rows};
+}
+
+function doExport(type){
   if(!hasPerm('canExport')){showToast('🔒 ليس لديك صلاحية التصدير','var(--red)');return;}
   if(!customers.length){showToast('⚠️ لا توجد بيانات','var(--red)');return;}
-  const h=['رقم التسلسل','اسم العميل','رقم الجوال','التاريخ','الوقت','نوع الباقة','الفرع','اسم الحلاق'];
-  const rows=customers.map(c=>['#'+String(c.seq).padStart(3,'0'),c.name,c.phone,c.date||'',c.time,'الباقة '+c.package,c.branch||'',c.barber]);
-  const csv='\uFEFF'+[h,...rows].map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
-  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8;'}));
-  a.download='HanAlwaad_customers.csv';a.click();URL.revokeObjectURL(a.href);
+  if(type==='csv')  exportAsCSV();
+  if(type==='excel')exportAsExcel();
+  if(type==='word') exportAsWord();
+}
+
+function exportAsCSV(){
+  const {headers,rows}=getExportData();
+  const csv='\uFEFF'+[headers,...rows].map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8;'}));
+  a.download='حلاق_حان_الوعد.csv'; a.click(); URL.revokeObjectURL(a.href);
+  showToast('✅ تم تحميل ملف CSV');
+}
+
+function exportAsExcel(){
+  const {headers,rows}=getExportData();
+  const ws=XLSX.utils.aoa_to_sheet([headers,...rows]);
+  // RTL and column widths
+  ws['!cols']=headers.map(()=>({wch:20}));
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'العملاء');
+  XLSX.writeFile(wb,'حلاق_حان_الوعد.xlsx');
+  showToast('✅ تم تحميل ملف Excel');
+}
+
+function exportAsWord(){
+  const {headers,rows}=getExportData();
+  const thStyle='border:1px solid #999;padding:6px 10px;background:#1a1a1a;color:#c9a84c;font-weight:bold;text-align:right';
+  const tdStyle='border:1px solid #ccc;padding:6px 10px;text-align:right';
+  const ths=headers.map(h=>`<th style="${thStyle}">${h}</th>`).join('');
+  const trs=rows.map(r=>`<tr>${r.map(v=>`<td style="${tdStyle}">${v}</td>`).join('')}</tr>`).join('');
+  const html=`
+    <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
+    <head><meta charset="utf-8">
+    <style>body{font-family:Arial,sans-serif;direction:rtl}table{border-collapse:collapse;width:100%}</style>
+    </head><body>
+    <h2 style="color:#c9a84c;text-align:center">حلاق حان الوعد — سجل العملاء</h2>
+    <p style="text-align:center;color:#666">تاريخ التصدير: ${new Date().toLocaleDateString('ar-SA')}</p>
+    <table>${ths}${trs}</table>
+    </body></html>`;
+  const blob=new Blob(['\ufeff'+html],{type:'application/msword;charset=utf-8'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='حلاق_حان_الوعد.doc'; a.click(); URL.revokeObjectURL(a.href);
+  showToast('✅ تم تحميل ملف Word');
 }
 
 /* ═══════════════════════════════════════════════
