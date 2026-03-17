@@ -1350,28 +1350,42 @@ function closeExportMenu(){document.getElementById('exportMenu').classList.remov
 document.addEventListener('click',()=>closeExportMenu());
 
 function getSortedRows(){
-  // Sort by time first, then date as tiebreaker
+  // Sort by date first, then time within each date
   return [...customers].sort((a,b)=>{
-    const ta=a.timeRaw||'00:00', tb=b.timeRaw||'00:00';
-    if(ta!==tb) return ta<tb?-1:1;
     const toISO=s=>s?s.split('/').reverse().join('-'):'';
     const da=toISO(a.date||''), db=toISO(b.date||'');
-    return da<db?-1:da>db?1:0;
+    if(da!==db) return da<db?-1:1;
+    const ta=a.timeRaw||'00:00', tb=b.timeRaw||'00:00';
+    return ta<tb?-1:ta>tb?1:0;
   });
 }
 
-function getExportData(){
-  const headers=['رقم التسلسل','اسم العميل','رقم الجوال','التاريخ','الوقت','نوع الباقة','الفرع','اسم الحلاق','تعارض'];
+// Group sorted rows by date, preserving time sort within each group
+function getGroupedExportData(){
   const conflicted = getConflictingSeqs();
-  const TEXT_PKGS=['شعر','دقن','شعر + دقن'];
-  const rows=getSortedRows().map(c=>[
-    '#'+String(c.seq).padStart(3,'0'),c.name,c.phone,c.date||'',c.time,
-    TEXT_PKGS.includes(c.package)?c.package:'الباقة '+c.package,
-    c.branch||'',c.barber,
-    conflicted.has(c.seq) ? '⚠️ تعارض' : ''
-  ]);
-  const conflictFlags=getSortedRows().map(c=>conflicted.has(c.seq));
-  return {headers, rows, conflictFlags};
+  const TEXT_PKGS = ['شعر','دقن','شعر + دقن'];
+  const headers = ['رقم التسلسل','اسم العميل','رقم الجوال','الوقت','نوع الباقة','الفرع','اسم الحلاق','تعارض'];
+  const sorted  = getSortedRows();
+
+  // Build ordered list of unique dates
+  const dateOrder = [];
+  const seen = new Set();
+  sorted.forEach(c => { if(c.date && !seen.has(c.date)){ seen.add(c.date); dateOrder.push(c.date); } });
+
+  // Group
+  const groups = dateOrder.map(date => {
+    const entries = sorted.filter(c => c.date === date);
+    const rows = entries.map(c => [
+      '#'+String(c.seq).padStart(3,'0'), c.name, c.phone, c.time,
+      TEXT_PKGS.includes(c.package) ? c.package : 'الباقة '+c.package,
+      c.branch||'', c.barber,
+      conflicted.has(c.seq) ? '⚠️ تعارض' : ''
+    ]);
+    const flags = entries.map(c => conflicted.has(c.seq));
+    return { date, rows, flags };
+  });
+
+  return { headers, groups };
 }
 
 function doExport(type){
@@ -1384,96 +1398,137 @@ function doExport(type){
 }
 
 function exportAsCSV(){
-  const {headers,rows}=getExportData();
-  const csv='\uFEFF'+[headers,...rows].map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8;'}));
-  a.download='حلاق_حان_الوعد.csv'; a.click(); URL.revokeObjectURL(a.href);
+  const {headers, groups} = getGroupedExportData();
+  let lines = [headers.map(v=>`"${v}"`).join(',')];
+  groups.forEach(g => {
+    lines.push(`"📅 ${g.date}"` + ','.repeat(headers.length-1)); // date separator
+    g.rows.forEach(r => lines.push(r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')));
+  });
+  const csv = '\uFEFF' + lines.join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8;'}));
+  a.download = 'حلاق_حان_الوعد.csv'; a.click(); URL.revokeObjectURL(a.href);
   showToast('✅ تم تحميل ملف CSV');
 }
 
 function exportAsExcel(){
-  const {headers,rows,conflictFlags}=getExportData();
-  const ws=XLSX.utils.aoa_to_sheet([headers,...rows]);
-  ws['!cols']=headers.map(()=>({wch:20}));
-  // Red fill for conflicting rows
-  rows.forEach((r,i)=>{
-    if(!conflictFlags[i]) return;
-    r.forEach((_,j)=>{
-      const cell=XLSX.utils.encode_cell({r:i+1,c:j});
-      if(!ws[cell]) return;
-      ws[cell].s={fill:{fgColor:{rgb:'FFD6D6'},patternType:'solid'},font:{bold:true}};
+  const {headers, groups} = getGroupedExportData();
+  const wb = XLSX.utils.book_new();
+
+  // One sheet per date
+  groups.forEach(g => {
+    const ws = XLSX.utils.aoa_to_sheet([headers, ...g.rows]);
+    ws['!cols'] = headers.map(()=>({wch:20}));
+    // Red fill for conflicts
+    g.rows.forEach((r,i) => {
+      if(!g.flags[i]) return;
+      r.forEach((_,j) => {
+        const cell = XLSX.utils.encode_cell({r:i+1, c:j});
+        if(!ws[cell]) return;
+        ws[cell].s = {fill:{fgColor:{rgb:'FFD6D6'},patternType:'solid'},font:{bold:true}};
+      });
     });
+    // Sheet name: use date as-is (max 31 chars for Excel)
+    const sheetName = g.date.replace(/\//g,'-').slice(0,31);
+    XLSX.utils.book_append_sheet(wb, ws, sheetName);
   });
-  const wb=XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb,ws,'العملاء');
-  XLSX.writeFile(wb,'حلاق_حان_الوعد.xlsx');
+
+  XLSX.writeFile(wb, 'حلاق_حان_الوعد.xlsx');
   showToast('✅ تم تحميل ملف Excel');
 }
 
 function exportAsWord(){
-  const {headers,rows,conflictFlags}=getExportData();
-  const thStyle='border:1px solid #999;padding:6px 10px;background:#1a1a1a;color:#c9a84c;font-weight:bold;text-align:right';
-  const tdStyle='border:1px solid #ccc;padding:6px 10px;text-align:right';
-  const tdConflict='border:1px solid #c0392b;padding:6px 10px;text-align:right;background:#ffd6d6;color:#7b0000;font-weight:bold';
-  const ths=headers.map(h=>`<th style="${thStyle}">${h}</th>`).join('');
-  const trs=rows.map((r,i)=>{
-    const isC=conflictFlags[i];
-    const trStyle=isC?'background:#ffd6d6':'';
-    return `<tr style="${trStyle}">${r.map(v=>`<td style="${isC?tdConflict:tdStyle}">${v}</td>`).join('')}</tr>`;
-  }).join('');
-  const html=`<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
+  const {headers, groups} = getGroupedExportData();
+  const thS = 'border:1px solid #999;padding:6px 10px;background:#1a1a1a;color:#c9a84c;font-weight:bold;text-align:right;font-size:12px';
+  const tdS = 'border:1px solid #ccc;padding:6px 10px;text-align:right;font-size:11px';
+  const tdC = 'border:1px solid #c0392b;padding:6px 10px;text-align:right;background:#ffd6d6;color:#7b0000;font-weight:bold;font-size:11px';
+  const hasAnyConflict = groups.some(g=>g.flags.some(Boolean));
+
+  let tablesHtml = '';
+  groups.forEach(g => {
+    const ths = headers.map(h=>`<th style="${thS}">${h}</th>`).join('');
+    const trs = g.rows.map((r,i) => {
+      const isC = g.flags[i];
+      return `<tr style="${isC?'background:#ffd6d6':''}">${r.map(v=>`<td style="${isC?tdC:tdS}">${v}</td>`).join('')}</tr>`;
+    }).join('');
+    tablesHtml += `
+      <h3 style="color:#9a7530;margin:24px 0 8px;font-size:14px;border-bottom:2px solid #c9a84c;padding-bottom:4px">
+        📅 ${g.date} &nbsp;—&nbsp; ${g.rows.length} حجز
+      </h3>
+      <table style="width:100%;border-collapse:collapse;margin-bottom:8px">
+        <thead><tr>${ths}</tr></thead><tbody>${trs}</tbody>
+      </table>`;
+  });
+
+  const html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
     <head><meta charset="utf-8">
-    <style>body{font-family:Arial,sans-serif;direction:rtl}table{border-collapse:collapse;width:100%}</style>
+    <style>body{font-family:Arial,sans-serif;direction:rtl;padding:20px}</style>
     </head><body>
-    <h2 style="color:#c9a84c;text-align:center">حلاق حان الوعد — سجل العملاء</h2>
-    <p style="text-align:center;color:#666">تاريخ التصدير: ${new Date().toLocaleDateString('ar-SA')}</p>
-    <p style="color:#c0392b;font-size:12px;text-align:right">⚠️ الصفوف المميزة بالأحمر تحتوي على تعارض في المواعيد</p>
-    <table>${ths}${trs}</table></body></html>`;
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(new Blob(['\ufeff'+html],{type:'application/msword;charset=utf-8'}));
-  a.download='حلاق_حان_الوعد.doc'; a.click(); URL.revokeObjectURL(a.href);
+    <h2 style="color:#c9a84c;text-align:center;font-size:18px">حلاق حان الوعد — سجل العملاء</h2>
+    <p style="text-align:center;color:#666;font-size:12px;margin-bottom:4px">تاريخ التصدير: ${new Date().toLocaleDateString('ar-SA')}</p>
+    ${hasAnyConflict?'<p style="color:#c0392b;font-size:11px;text-align:right;margin-bottom:16px">⚠️ الصفوف المميزة بالأحمر تحتوي على تعارض في المواعيد</p>':''}
+    ${tablesHtml}
+    </body></html>`;
+
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob(['\ufeff'+html],{type:'application/msword;charset=utf-8'}));
+  a.download = 'حلاق_حان_الوعد.doc'; a.click(); URL.revokeObjectURL(a.href);
   showToast('✅ تم تحميل ملف Word');
 }
 
 function exportAsPDF(){
-  const {headers,rows,conflictFlags}=getExportData();
-  const thS='background:#1a1a1a;color:#c9a84c;padding:8px 12px;border:1px solid #444;font-size:12px;text-align:right';
-  const tdS='padding:7px 12px;border:1px solid #ddd;font-size:11px;text-align:right';
-  const tdC='padding:7px 12px;border:1px solid #c0392b;font-size:11px;text-align:right;background:#ffd6d6;color:#7b0000;font-weight:bold';
-  const trAlt='background:#f9f9f9';
-  const trConf='background:#ffd6d6';
-  const ths=headers.map(h=>`<th style="${thS}">${h}</th>`).join('');
-  const trs=rows.map((r,i)=>{
-    const isC=conflictFlags[i];
-    const trStyle=isC?trConf:(i%2===1?trAlt:'');
-    return `<tr style="${trStyle}">${r.map(v=>`<td style="${isC?tdC:tdS}">${v}</td>`).join('')}</tr>`;
-  }).join('');
-  const now=new Date().toLocaleDateString('ar-SA',{year:'numeric',month:'long',day:'numeric'});
-  const hasConflicts=conflictFlags.some(Boolean);
-  const printWin=window.open('','_blank','width=900,height=700');
+  const {headers, groups} = getGroupedExportData();
+  const thS = 'background:#1a1a1a;color:#c9a84c;padding:7px 10px;border:1px solid #444;font-size:11px;text-align:right';
+  const tdS = 'padding:6px 10px;border:1px solid #ddd;font-size:10px;text-align:right';
+  const tdC = 'padding:6px 10px;border:1px solid #c0392b;font-size:10px;text-align:right;background:#ffd6d6;color:#7b0000;font-weight:bold';
+  const hasAnyConflict = groups.some(g=>g.flags.some(Boolean));
+  const now = new Date().toLocaleDateString('ar-SA',{year:'numeric',month:'long',day:'numeric'});
+
+  let tablesHtml = '';
+  groups.forEach((g,gi) => {
+    const ths = headers.map(h=>`<th style="${thS}">${h}</th>`).join('');
+    const trs = g.rows.map((r,i) => {
+      const isC = g.flags[i];
+      const trBg = isC ? '#ffd6d6' : (i%2===1?'#f9f9f9':'#fff');
+      return `<tr style="background:${trBg}">${r.map(v=>`<td style="${isC?tdC:tdS}">${v}</td>`).join('')}</tr>`;
+    }).join('');
+    tablesHtml += `
+      <div class="day-block" style="${gi>0?'margin-top:28px':''}">
+        <div class="day-header">
+          <span>📅 ${g.date}</span>
+          <span class="day-count">${g.rows.length} حجز</span>
+        </div>
+        <table><thead><tr>${ths}</tr></thead><tbody>${trs}</tbody></table>
+      </div>`;
+  });
+
+  const totalCount = groups.reduce((s,g)=>s+g.rows.length,0);
+  const printWin = window.open('','_blank','width=1000,height=750');
   printWin.document.write(`<!DOCTYPE html><html lang="ar" dir="rtl">
   <head><meta charset="utf-8">
   <title>حلاق حان الوعد — سجل العملاء</title>
   <style>
     *{margin:0;padding:0;box-sizing:border-box}
-    body{font-family:'Segoe UI',Tahoma,Arial,sans-serif;direction:rtl;background:#fff;color:#111;padding:24px}
-    h1{font-size:20px;color:#9a7530;text-align:center;margin-bottom:4px}
-    .sub{text-align:center;color:#666;font-size:12px;margin-bottom:6px}
-    .conflict-note{color:#c0392b;font-size:11px;text-align:right;margin-bottom:10px;${hasConflicts?'':'display:none'}}
-    table{width:100%;border-collapse:collapse;font-size:11px}
-    .count{font-size:11px;color:#888;margin-bottom:8px;text-align:right}
-    @media print{body{padding:10px}button{display:none!important}}
+    body{font-family:'Segoe UI',Tahoma,Arial,sans-serif;direction:rtl;background:#fff;color:#111;padding:20px}
+    h1{font-size:18px;color:#9a7530;text-align:center;margin-bottom:3px}
+    .meta{text-align:center;color:#777;font-size:11px;margin-bottom:4px}
+    .total{font-size:11px;color:#555;text-align:right;margin-bottom:16px}
+    .conflict-note{color:#c0392b;font-size:10px;text-align:right;margin-bottom:12px;padding:5px 8px;border:1px solid #ffb3b3;background:#fff5f5}
+    .day-header{display:flex;justify-content:space-between;align-items:center;background:#f5f0e8;border:1px solid #c9a84c;border-bottom:none;padding:7px 12px}
+    .day-header span{font-size:13px;font-weight:bold;color:#7a5c1e}
+    .day-count{font-size:11px;color:#9a7530;background:#fff;border:1px solid #c9a84c;padding:2px 8px}
+    table{width:100%;border-collapse:collapse}
+    @media print{body{padding:8px}.day-block{page-break-inside:avoid}button{display:none!important}}
   </style>
   </head><body>
-  <h1>&#9986; حلاق حان الوعد</h1>
-  <p class="sub">سجل العملاء &mdash; تاريخ التصدير: ${now}</p>
-  <p class="count">إجمالي العملاء: ${rows.length}</p>
-  <p class="conflict-note">⚠️ الصفوف المميزة بالأحمر تحتوي على تعارض في المواعيد (أقل من 30 دقيقة بين موعدين لنفس الحلاق)</p>
-  <table><thead><tr>${ths}</tr></thead><tbody>${trs}</tbody></table>
+  <h1>✂ حلاق حان الوعد</h1>
+  <p class="meta">سجل العملاء &mdash; تاريخ التصدير: ${now}</p>
+  <p class="total">إجمالي الحجوزات: ${totalCount} حجز في ${groups.length} ${groups.length===1?'يوم':'أيام'}</p>
+  ${hasAnyConflict?'<p class="conflict-note">⚠️ الصفوف المميزة بالأحمر تحتوي على تعارض في المواعيد (أقل من 30 دقيقة بين موعدين لنفس الحلاق)</p>':''}
+  ${tablesHtml}
   <br>
   <div style="text-align:center">
-    <button onclick="window.print()" style="padding:8px 24px;background:#c9a84c;border:none;color:#111;font-size:14px;cursor:pointer;border-radius:3px;font-family:inherit">
+    <button onclick="window.print()" style="padding:8px 28px;background:#c9a84c;border:none;color:#111;font-size:13px;cursor:pointer;font-family:inherit">
       🖨️ طباعة / حفظ كـ PDF
     </button>
   </div>
