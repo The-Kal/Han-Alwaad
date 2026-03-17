@@ -127,9 +127,18 @@ tbody tr{border-bottom:1px solid var(--border);transition:background .15s}
 tbody tr:last-child{border-bottom:none}
 tbody tr:hover{background:rgba(201,168,76,.04)}
 tbody td{padding:.8rem 1rem;font-size:.88rem;color:var(--text-primary);text-align:right}
-/* Conflict highlight */
-tbody tr.row-conflict{background:rgba(192,57,43,.12)!important;border-right:3px solid var(--red)}
-tbody tr.row-conflict:hover{background:rgba(192,57,43,.18)!important}
+/* Conflict highlight — applied to td for cross-browser mobile support */
+tbody tr.row-conflict td{
+  background-color:rgba(192,57,43,.15)!important;
+  border-top:1px solid rgba(192,57,43,.3)!important;
+  border-bottom:1px solid rgba(192,57,43,.3)!important;
+}
+tbody tr.row-conflict td:first-child{
+  border-right:3px solid #c0392b!important;
+}
+tbody tr.row-conflict:hover td{
+  background-color:rgba(192,57,43,.22)!important;
+}
 .conflict-icon{font-size:.75rem;margin-right:.3rem;vertical-align:middle}
 .td-seq{color:var(--gold);font-weight:700}
 .td-pkg{display:inline-block;padding:.2rem .6rem;background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.2);color:var(--gold-light);font-size:.78rem;font-weight:600}
@@ -1274,16 +1283,18 @@ function renderTable() {
     const isConflict = conflicted.has(c.seq);
     const conflictBadge = isConflict ? `<span class="conflict-icon" title="تعارض في المواعيد">⚠️</span>` : '';
     const rowClass = [i===customers.length-1?'row-new':'', isConflict?'row-conflict':''].filter(Boolean).join(' ');
+    const tdStyle  = isConflict ? 'style="background-color:rgba(192,57,43,.15);border-top:1px solid rgba(192,57,43,.3);border-bottom:1px solid rgba(192,57,43,.3)"' : '';
+    const td1Style = isConflict ? 'style="background-color:rgba(192,57,43,.15);border-top:1px solid rgba(192,57,43,.3);border-bottom:1px solid rgba(192,57,43,.3);border-right:3px solid #c0392b"' : '';
     return `<tr class="${rowClass}">
-      <td class="td-seq">#${String(c.seq).padStart(3,'0')}</td>
-      <td>${esc(c.name)}</td>
-      <td dir="ltr" style="text-align:right">${esc(c.phone)}</td>
-      <td class="td-date">${esc(c.date||'')}</td>
-      <td class="td-time">${conflictBadge}${esc(c.time)}</td>
-      <td><span class="td-pkg">${['شعر','دقن','شعر + دقن'].includes(c.package)?esc(c.package):'الباقة '+esc(c.package)}</span></td>
-      <td class="td-branch">${esc(c.branch||'')}</td>
-      <td>${esc(c.barber)}</td>
-      <td><div class="row-actions">${actions.join('')}</div></td>
+      <td class="td-seq" ${td1Style}>#${String(c.seq).padStart(3,'0')}</td>
+      <td ${tdStyle}>${esc(c.name)}</td>
+      <td dir="ltr" style="text-align:right${isConflict?';background-color:rgba(192,57,43,.15);border-top:1px solid rgba(192,57,43,.3);border-bottom:1px solid rgba(192,57,43,.3)':''}">${esc(c.phone)}</td>
+      <td class="td-date" ${tdStyle}>${esc(c.date||'')}</td>
+      <td class="td-time" ${tdStyle}>${conflictBadge}${esc(c.time)}</td>
+      <td ${tdStyle}><span class="td-pkg">${['شعر','دقن','شعر + دقن'].includes(c.package)?esc(c.package):'الباقة '+esc(c.package)}</span></td>
+      <td class="td-branch" ${tdStyle}>${esc(c.branch||'')}</td>
+      <td ${tdStyle}>${esc(c.barber)}</td>
+      <td ${tdStyle}><div class="row-actions">${actions.join('')}</div></td>
     </tr>`;
   }).join('');
 }
