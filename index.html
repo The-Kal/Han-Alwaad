@@ -349,6 +349,9 @@ tbody tr.row-conflict:hover{background:rgba(192,57,43,.18)!important}
                 <option value="4">الباقة 4</option>
                 <option value="5">الباقة 5</option>
                 <option value="6">الباقة 6</option>
+                <option value="شعر">شعر</option>
+                <option value="دقن">دقن</option>
+                <option value="شعر + دقن">شعر + دقن</option>
               </select>
             </div>
             <div class="form-field">
@@ -573,6 +576,9 @@ tbody tr.row-conflict:hover{background:rgba(192,57,43,.18)!important}
           <option value="4">الباقة 4</option>
           <option value="5">الباقة 5</option>
           <option value="6">الباقة 6</option>
+          <option value="شعر">شعر</option>
+          <option value="دقن">دقن</option>
+          <option value="شعر + دقن">شعر + دقن</option>
         </select>
       </div>
       <div class="form-field">
@@ -1274,7 +1280,7 @@ function renderTable() {
       <td dir="ltr" style="text-align:right">${esc(c.phone)}</td>
       <td class="td-date">${esc(c.date||'')}</td>
       <td class="td-time">${conflictBadge}${esc(c.time)}</td>
-      <td><span class="td-pkg">الباقة ${esc(c.package)}</span></td>
+      <td><span class="td-pkg">${['شعر','دقن','شعر + دقن'].includes(c.package)?esc(c.package):'الباقة '+esc(c.package)}</span></td>
       <td class="td-branch">${esc(c.branch||'')}</td>
       <td>${esc(c.barber)}</td>
       <td><div class="row-actions">${actions.join('')}</div></td>
@@ -1357,8 +1363,11 @@ function getSortedRows(){
 function getExportData(){
   const headers=['رقم التسلسل','اسم العميل','رقم الجوال','التاريخ','الوقت','نوع الباقة','الفرع','اسم الحلاق','تعارض'];
   const conflicted = getConflictingSeqs();
+  const TEXT_PKGS=['شعر','دقن','شعر + دقن'];
   const rows=getSortedRows().map(c=>[
-    '#'+String(c.seq).padStart(3,'0'),c.name,c.phone,c.date||'',c.time,'الباقة '+c.package,c.branch||'',c.barber,
+    '#'+String(c.seq).padStart(3,'0'),c.name,c.phone,c.date||'',c.time,
+    TEXT_PKGS.includes(c.package)?c.package:'الباقة '+c.package,
+    c.branch||'',c.barber,
     conflicted.has(c.seq) ? '⚠️ تعارض' : ''
   ]);
   const conflictFlags=getSortedRows().map(c=>conflicted.has(c.seq));
