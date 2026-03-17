@@ -230,6 +230,125 @@ tbody tr.row-conflict:hover td{
 .row-new{animation:rowIn .5s ease forwards}
 ::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-track{background:var(--bg-deep)}::-webkit-scrollbar-thumb{background:var(--border)}::-webkit-scrollbar-thumb:hover{background:var(--gold-dark)}
 @media(max-width:600px){.admin-body{padding:1rem}.entry-card{padding:1.25rem}.admin-header{padding:.75rem 1rem}.admin-tabs{padding:0 .5rem}}
+
+/* ══ MOBILE CARD VIEW ══ */
+@media(max-width:768px){
+  /* Hide table, show cards */
+  .table-wrap table{display:none}
+  .cards-wrap{display:flex;flex-direction:column;gap:.75rem;padding:.75rem}
+
+  .resv-card{
+    background:var(--bg-elevated);
+    border:1px solid var(--border);
+    border-right:3px solid var(--border-gold);
+    padding:1rem;
+    border-radius:2px;
+    transition:border-color .2s;
+    animation:fadeIn .3s ease;
+  }
+  .resv-card.card-conflict{
+    background:rgba(192,57,43,.1)!important;
+    border-right:3px solid #c0392b!important;
+    border-color:rgba(192,57,43,.35)!important;
+  }
+  .card-top{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    margin-bottom:.65rem;
+    gap:.5rem;
+  }
+  .card-name{
+    font-size:1rem;
+    font-weight:700;
+    color:var(--text-primary);
+    line-height:1.3;
+    flex:1;
+  }
+  .card-seq{
+    font-size:.72rem;
+    color:var(--gold);
+    font-weight:700;
+    background:rgba(201,168,76,.1);
+    border:1px solid var(--border-gold);
+    padding:.15rem .45rem;
+    white-space:nowrap;
+    flex-shrink:0;
+  }
+  .card-highlights{
+    display:flex;
+    gap:.5rem;
+    flex-wrap:wrap;
+    margin-bottom:.65rem;
+  }
+  .card-pill{
+    display:inline-flex;
+    align-items:center;
+    gap:.3rem;
+    padding:.3rem .7rem;
+    border:1px solid var(--border);
+    font-size:.82rem;
+    color:var(--text-secondary);
+    background:var(--bg-input);
+    white-space:nowrap;
+  }
+  .card-pill.pill-time{
+    color:var(--gold-light);
+    border-color:var(--border-gold);
+    background:rgba(201,168,76,.07);
+    font-weight:600;
+  }
+  .card-pill.pill-barber{
+    color:var(--text-primary);
+    font-weight:600;
+  }
+  .card-pill.pill-conflict{
+    color:#e74c3c;
+    border-color:rgba(192,57,43,.4);
+    background:rgba(192,57,43,.1);
+    font-weight:600;
+  }
+  .card-details{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:.3rem .75rem;
+    padding-top:.6rem;
+    border-top:1px solid var(--border);
+  }
+  .card-detail{
+    display:flex;
+    flex-direction:column;
+    gap:.1rem;
+  }
+  .card-detail-label{
+    font-size:.68rem;
+    color:var(--text-muted);
+    text-transform:uppercase;
+    letter-spacing:.04em;
+  }
+  .card-detail-val{
+    font-size:.82rem;
+    color:var(--text-secondary);
+  }
+  .card-actions{
+    display:flex;
+    gap:.5rem;
+    margin-top:.75rem;
+    padding-top:.6rem;
+    border-top:1px solid var(--border);
+    justify-content:flex-end;
+  }
+  .card-actions .btn-sm{
+    padding:.4rem 1rem;
+    font-size:.82rem;
+  }
+  /* Keep table visible on desktop */
+  .cards-wrap{display:none}
+}
+@media(min-width:769px){
+  .cards-wrap{display:none!important}
+}
+
 @media print{.admin-header,.admin-tabs,.entry-card,.tbl-actions,.row-actions,.btn-icon{display:none!important}body{background:#fff;color:#000}table,thead th,tbody td{color:#000!important}.table-card{border:1px solid #ccc}}
 </style>
 </head>
@@ -416,6 +535,7 @@ tbody tr.row-conflict:hover td{
             </tr></thead>
             <tbody id="tableBody"></tbody>
           </table>
+          <div class="cards-wrap" id="cardsWrap"></div>
           <div class="empty-state" id="emptyState">
             <div class="ei">💈</div>
             <p>لا توجد بيانات محفوظة بعد.</p>
@@ -1270,32 +1390,83 @@ function showPhHint(msg,isErr){const h=document.getElementById('phoneHint');h.te
    TABLE RENDER
 ═══════════════════════════════════════════════ */
 function renderTable() {
-  const tbody=document.getElementById('tableBody'), empty=document.getElementById('emptyState');
-  document.getElementById('countBadge').textContent=customers.length+' عميل';
-  if(!customers.length){tbody.innerHTML='';empty.style.display='block';return;}
-  empty.style.display='none';
-  const canEdit=hasPerm('canEdit'), canDel=hasPerm('canDelete');
+  const tbody  = document.getElementById('tableBody');
+  const cards  = document.getElementById('cardsWrap');
+  const empty  = document.getElementById('emptyState');
+  document.getElementById('countBadge').textContent = customers.length + ' عميل';
+
+  if (!customers.length) {
+    tbody.innerHTML = ''; cards.innerHTML = '';
+    empty.style.display = 'block'; return;
+  }
+  empty.style.display = 'none';
+
+  const canEdit    = hasPerm('canEdit');
+  const canDel     = hasPerm('canDelete');
   const conflicted = getConflictingSeqs();
-  tbody.innerHTML=customers.map((c,i)=>{
-    const actions=[];
-    if(canEdit) actions.push(`<button class="btn-sm" data-seq="${c.seq}" onclick="openEditResv(${c.seq})">✏️</button>`);
-    if(canDel)  actions.push(`<button class="btn-sm danger" data-seq="${c.seq}" onclick="confirmDel(${c.seq})">✕</button>`);
+  const TEXT_PKGS  = ['شعر','دقن','شعر + دقن'];
+  const pkgLabel   = p => TEXT_PKGS.includes(p) ? p : 'الباقة ' + p;
+
+  /* ── TABLE ROWS (desktop) ── */
+  tbody.innerHTML = customers.map((c,i) => {
+    const actions  = [];
+    if (canEdit) actions.push(`<button class="btn-sm" data-seq="${c.seq}" onclick="openEditResv(${c.seq})">✏️</button>`);
+    if (canDel)  actions.push(`<button class="btn-sm danger" data-seq="${c.seq}" onclick="confirmDel(${c.seq})">✕</button>`);
     const isConflict = conflicted.has(c.seq);
     const conflictBadge = isConflict ? `<span class="conflict-icon" title="تعارض في المواعيد">⚠️</span>` : '';
-    const rowClass = [i===customers.length-1?'row-new':'', isConflict?'row-conflict':''].filter(Boolean).join(' ');
-    const tdStyle  = isConflict ? 'style="background-color:rgba(192,57,43,.15);border-top:1px solid rgba(192,57,43,.3);border-bottom:1px solid rgba(192,57,43,.3)"' : '';
-    const td1Style = isConflict ? 'style="background-color:rgba(192,57,43,.15);border-top:1px solid rgba(192,57,43,.3);border-bottom:1px solid rgba(192,57,43,.3);border-right:3px solid #c0392b"' : '';
+    const rowClass  = [i===customers.length-1?'row-new':'', isConflict?'row-conflict':''].filter(Boolean).join(' ');
+    const tdStyle   = isConflict ? 'style="background-color:rgba(192,57,43,.15);border-top:1px solid rgba(192,57,43,.3);border-bottom:1px solid rgba(192,57,43,.3)"' : '';
+    const td1Style  = isConflict ? 'style="background-color:rgba(192,57,43,.15);border-top:1px solid rgba(192,57,43,.3);border-bottom:1px solid rgba(192,57,43,.3);border-right:3px solid #c0392b"' : '';
     return `<tr class="${rowClass}">
       <td class="td-seq" ${td1Style}>#${String(c.seq).padStart(3,'0')}</td>
       <td ${tdStyle}>${esc(c.name)}</td>
       <td dir="ltr" style="text-align:right${isConflict?';background-color:rgba(192,57,43,.15);border-top:1px solid rgba(192,57,43,.3);border-bottom:1px solid rgba(192,57,43,.3)':''}">${esc(c.phone)}</td>
       <td class="td-date" ${tdStyle}>${esc(c.date||'')}</td>
       <td class="td-time" ${tdStyle}>${conflictBadge}${esc(c.time)}</td>
-      <td ${tdStyle}><span class="td-pkg">${['شعر','دقن','شعر + دقن'].includes(c.package)?esc(c.package):'الباقة '+esc(c.package)}</span></td>
+      <td ${tdStyle}><span class="td-pkg">${esc(pkgLabel(c.package))}</span></td>
       <td class="td-branch" ${tdStyle}>${esc(c.branch||'')}</td>
       <td ${tdStyle}>${esc(c.barber)}</td>
       <td ${tdStyle}><div class="row-actions">${actions.join('')}</div></td>
     </tr>`;
+  }).join('');
+
+  /* ── CARDS (mobile) ── */
+  cards.innerHTML = customers.map((c,i) => {
+    const isConflict = conflicted.has(c.seq);
+    const actions = [];
+    if (canEdit) actions.push(`<button class="btn-sm" onclick="openEditResv(${c.seq})">✏️ تعديل</button>`);
+    if (canDel)  actions.push(`<button class="btn-sm danger" onclick="confirmDel(${c.seq})">✕ حذف</button>`);
+    return `
+    <div class="resv-card ${isConflict?'card-conflict':''} ${i===customers.length-1?'row-new':''}">
+      <div class="card-top">
+        <div class="card-name">${esc(c.name)}</div>
+        <div class="card-seq">#${String(c.seq).padStart(3,'0')}</div>
+      </div>
+      <div class="card-highlights">
+        <span class="card-pill pill-time">🕐 ${esc(c.time)}</span>
+        <span class="card-pill pill-barber">✂️ ${esc(c.barber)}</span>
+        ${isConflict?'<span class="card-pill pill-conflict">⚠️ تعارض في المواعيد</span>':''}
+      </div>
+      <div class="card-details">
+        <div class="card-detail">
+          <span class="card-detail-label">التاريخ</span>
+          <span class="card-detail-val">📅 ${esc(c.date||'')}</span>
+        </div>
+        <div class="card-detail">
+          <span class="card-detail-label">الباقة</span>
+          <span class="card-detail-val">${esc(pkgLabel(c.package))}</span>
+        </div>
+        <div class="card-detail">
+          <span class="card-detail-label">الفرع</span>
+          <span class="card-detail-val">${esc(c.branch||'')}</span>
+        </div>
+        <div class="card-detail">
+          <span class="card-detail-label">الجوال</span>
+          <span class="card-detail-val" dir="ltr" style="text-align:right">${esc(c.phone)}</span>
+        </div>
+      </div>
+      ${actions.length ? `<div class="card-actions">${actions.join('')}</div>` : ''}
+    </div>`;
   }).join('');
 }
 
