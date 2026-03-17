@@ -214,8 +214,73 @@ tbody tr.row-conflict:hover td{
 .btn-modal-save{padding:.6rem 1.4rem;background:linear-gradient(135deg,var(--gold-dark),var(--gold));border:none;color:var(--bg-deep);font-family:'Tajawal',sans-serif;font-size:.9rem;font-weight:700;cursor:pointer;transition:opacity .2s}
 .btn-modal-save:hover{opacity:.9}
 
-/* EXPORT DROPDOWN */
-.export-wrap{position:relative;display:inline-flex}
+/* DATE GROUP HEADER in table */
+.date-group-header td{
+  background:#0e0e0e!important;
+  color:var(--gold)!important;
+  font-size:.8rem;font-weight:700;
+  padding:.55rem 1rem!important;
+  border-top:2px solid var(--border-gold)!important;
+  border-bottom:1px solid var(--border-gold)!important;
+  letter-spacing:.04em;
+}
+.date-group-header:first-child td{ border-top:none!important; }
+
+/* FILTER BAR */
+.filter-bar{
+  display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;
+  padding:.85rem 1.5rem;border-bottom:1px solid var(--border);
+  background:#0d0d0d;
+}
+.filter-bar label{font-size:.75rem;color:var(--text-muted);white-space:nowrap}
+.filter-select{
+  padding:.4rem .7rem;background:var(--bg-input);border:1px solid var(--border);
+  color:var(--text-secondary);font-family:'Tajawal',sans-serif;font-size:.82rem;
+  outline:none;cursor:pointer;min-width:110px;transition:border-color .2s;direction:rtl
+}
+.filter-select:focus,.filter-select:hover{border-color:var(--gold);color:var(--text-primary)}
+.filter-select.active{border-color:var(--gold);color:var(--gold-light)}
+.filter-reset{
+  padding:.4rem .8rem;background:transparent;border:1px solid var(--border);
+  color:var(--text-muted);font-family:'Tajawal',sans-serif;font-size:.78rem;
+  cursor:pointer;transition:all .2s;margin-right:auto
+}
+.filter-reset:hover{border-color:var(--red);color:var(--red)}
+.filter-count{font-size:.78rem;color:var(--text-muted)}
+
+/* CONFLICT WITH badge */
+.conflict-with{
+  display:inline-block;font-size:.72rem;padding:.1rem .4rem;
+  background:rgba(192,57,43,.15);border:1px solid rgba(192,57,43,.3);
+  color:#e74c3c;margin-right:.3rem;white-space:nowrap;
+}
+
+/* EXPORT DATE MODAL */
+.export-date-list{display:flex;flex-direction:column;gap:.5rem;margin-bottom:1.25rem}
+.export-date-opt{
+  display:flex;align-items:center;gap:.65rem;padding:.55rem .85rem;
+  border:1px solid var(--border);cursor:pointer;transition:border-color .2s,background .2s;
+}
+.export-date-opt:hover{border-color:var(--border-gold);background:rgba(201,168,76,.05)}
+.export-date-opt input[type=radio]{accent-color:var(--gold);cursor:pointer}
+.export-date-opt label{cursor:pointer;font-size:.9rem;color:var(--text-secondary);flex:1}
+.export-type-btns{display:flex;gap:.6rem;flex-wrap:wrap}
+.btn-export-fmt{
+  flex:1;min-width:80px;padding:.55rem .5rem;background:transparent;
+  border:1px solid var(--border);color:var(--text-secondary);
+  font-family:'Tajawal',sans-serif;font-size:.85rem;cursor:pointer;
+  transition:all .2s;text-align:center
+}
+.btn-export-fmt:hover{border-color:var(--gold);color:var(--gold);background:rgba(201,168,76,.06)}
+
+/* MOBILE DATE SEPARATOR CARD */
+.date-sep-card{
+  background:#0e0e0e;border:1px solid var(--border-gold);
+  border-right:3px solid var(--gold);padding:.55rem 1rem;
+  font-size:.85rem;font-weight:700;color:var(--gold);
+  display:flex;align-items:center;justify-content:space-between;
+}
+.date-sep-count{font-size:.72rem;color:var(--text-muted);font-weight:400}
 .export-menu{position:absolute;top:calc(100% + 4px);left:0;background:var(--bg-card);border:1px solid var(--border-gold);min-width:160px;z-index:500;display:none;flex-direction:column}
 .export-menu.open{display:flex}
 .export-menu button{padding:.65rem 1rem;background:none;border:none;border-bottom:1px solid var(--border);color:var(--text-secondary);font-family:'Tajawal',sans-serif;font-size:.85rem;cursor:pointer;text-align:right;transition:background .15s,color .15s}
@@ -512,18 +577,27 @@ tbody tr.row-conflict:hover td{
         <div class="table-toolbar">
           <h3>قائمة العملاء</h3>
           <div class="tbl-actions">
-            <button class="btn-icon" id="btnPrint"     onclick="window.print()">🖨️ طباعة</button>
+            <button class="btn-icon" id="btnPrint" onclick="window.print()">🖨️ طباعة</button>
             <div class="export-wrap" id="exportWrap">
               <button class="btn-icon" id="btnExport" onclick="toggleExportMenu(event)">⬇️ تحميل كملف ▾</button>
               <div class="export-menu" id="exportMenu">
-                <button onclick="doExport('csv');  closeExportMenu()">📄 CSV</button>
-                <button onclick="doExport('excel');closeExportMenu()">📊 Excel</button>
-                <button onclick="doExport('word'); closeExportMenu()">📝 Word</button>
-                <button onclick="doExport('pdf');  closeExportMenu()">📑 PDF</button>
+                <button onclick="openExportModal('csv'); closeExportMenu()">📄 CSV</button>
+                <button onclick="openExportModal('excel');closeExportMenu()">📊 Excel</button>
+                <button onclick="openExportModal('word'); closeExportMenu()">📝 Word</button>
+                <button onclick="openExportModal('pdf');  closeExportMenu()">📑 PDF</button>
               </div>
             </div>
-            <button class="btn-icon" id="btnClearAll"  style="border-color:#3a1a1a;color:#c0392b" onclick="confirmClearAll()">🗑 مسح الكل</button>
+            <button class="btn-icon" id="btnClearAll" style="border-color:#3a1a1a;color:#c0392b" onclick="confirmClearAll()">🗑 مسح الكل</button>
           </div>
+        </div>
+        <!-- FILTER BAR -->
+        <div class="filter-bar" id="filterBar">
+          <label>تصفية:</label>
+          <select class="filter-select" id="filterDate"   onchange="applyFilters()"><option value="">📅 كل التواريخ</option></select>
+          <select class="filter-select" id="filterBranch" onchange="applyFilters()"><option value="">🏪 كل الفروع</option><option value="الفرع الأول">الفرع الأول</option><option value="الفرع الثاني">الفرع الثاني</option></select>
+          <select class="filter-select" id="filterBarber" onchange="applyFilters()"><option value="">✂️ كل الحلاقين</option></select>
+          <button class="filter-reset" id="filterReset" onclick="resetFilters()">✕ إلغاء التصفية</button>
+          <span class="filter-count" id="filterCount"></span>
         </div>
         <div class="table-wrap">
           <table>
@@ -784,6 +858,20 @@ tbody tr.row-conflict:hover td{
     <div class="modal-actions">
       <button class="btn-cancel" onclick="closeAddBarber()">إلغاء</button>
       <button class="btn-modal-save" onclick="doAddBarber()">➕ إضافة</button>
+    </div>
+  </div>
+</div>
+
+<!-- Export date selection modal -->
+<div class="modal-backdrop" id="exportModal">
+  <div class="modal" style="max-width:420px">
+    <h3 id="exportModalTitle">📥 تحميل كملف</h3>
+    <p style="color:var(--text-muted);font-size:.85rem;margin-bottom:1.25rem">اختر نطاق التاريخ للتصدير:</p>
+    <div class="export-date-list" id="exportDateList"></div>
+    <div class="alert-box alert-error" id="exportModalErr"></div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeExportModal()">إلغاء</button>
+      <button class="btn-modal-save" onclick="confirmExport()">⬇️ تحميل</button>
     </div>
   </div>
 </div>
@@ -1307,9 +1395,9 @@ function findConflict(barber, date, timeRaw, excludeSeq=null) {
     Math.abs(timeToMins(c.timeRaw)-nm) < SLOT_MIN
   ) || null;
 }
-// Returns a Set of seq numbers that have a time conflict with another entry
-function getConflictingSeqs() {
-  const conflicted = new Set();
+// Returns Map<seq, [conflicting seqs]>
+function getConflictMap() {
+  const map = new Map();
   for (let i=0; i<customers.length; i++) {
     const a = customers[i];
     if (!a.timeRaw) continue;
@@ -1318,11 +1406,30 @@ function getConflictingSeqs() {
       if (!b.timeRaw) continue;
       if (a.barber===b.barber && a.date===b.date &&
           Math.abs(timeToMins(a.timeRaw)-timeToMins(b.timeRaw)) < SLOT_MIN) {
-        conflicted.add(a.seq); conflicted.add(b.seq);
+        if (!map.has(a.seq)) map.set(a.seq, []);
+        if (!map.has(b.seq)) map.set(b.seq, []);
+        map.get(a.seq).push(b.seq);
+        map.get(b.seq).push(a.seq);
       }
     }
   }
-  return conflicted;
+  return map;
+}
+// For export (needs a Set)
+function getConflictingSeqs(list) {
+  const src = list || customers;
+  const s = new Set();
+  for (let i=0; i<src.length; i++) {
+    const a=src[i]; if(!a.timeRaw) continue;
+    for (let j=i+1; j<src.length; j++) {
+      const b=src[j]; if(!b.timeRaw) continue;
+      if (a.barber===b.barber && a.date===b.date &&
+          Math.abs(timeToMins(a.timeRaw)-timeToMins(b.timeRaw)) < SLOT_MIN) {
+        s.add(a.seq); s.add(b.seq);
+      }
+    }
+  }
+  return s;
 }
 
 /* ═══════════════════════════════════════════════
@@ -1385,87 +1492,174 @@ function clearForm() {
 function showPhHint(msg,isErr){const h=document.getElementById('phoneHint');h.textContent=msg;isErr?h.classList.add('err'):h.classList.remove('err');}
 
 /* ═══════════════════════════════════════════════
+   FILTERS
+═══════════════════════════════════════════════ */
+let _filterDate='', _filterBranch='', _filterBarber='';
+
+function populateFilters() {
+  const dates   = [...new Set(customers.map(c=>c.date).filter(Boolean))].sort((a,b)=>{
+    const toISO=s=>s?s.split('/').reverse().join('-'):'';
+    return toISO(a)<toISO(b)?-1:1;
+  });
+  const barbers = [...new Set(customers.map(c=>c.barber).filter(Boolean))].sort();
+
+  const dateEl   = document.getElementById('filterDate');
+  const barberEl = document.getElementById('filterBarber');
+  const curDate  = dateEl.value;
+  const curBarber= barberEl.value;
+
+  dateEl.innerHTML   = '<option value="">📅 كل التواريخ</option>' +
+    dates.map(d=>`<option value="${esc(d)}" ${curDate===d?'selected':''}>${esc(d)}</option>`).join('');
+  barberEl.innerHTML = '<option value="">✂️ كل الحلاقين</option>' +
+    barbers.map(b=>`<option value="${esc(b)}" ${curBarber===b?'selected':''}>${esc(b)}</option>`).join('');
+}
+
+function applyFilters() {
+  _filterDate   = document.getElementById('filterDate').value;
+  _filterBranch = document.getElementById('filterBranch').value;
+  _filterBarber = document.getElementById('filterBarber').value;
+  // Mark selects as active
+  ['filterDate','filterBranch','filterBarber'].forEach(id=>{
+    const el=document.getElementById(id);
+    el.classList.toggle('active', el.value!=='');
+  });
+  document.getElementById('filterReset').style.opacity =
+    (_filterDate||_filterBranch||_filterBarber) ? '1' : '0.4';
+  renderTable();
+}
+
+function resetFilters() {
+  _filterDate=''; _filterBranch=''; _filterBarber='';
+  document.getElementById('filterDate').value='';
+  document.getElementById('filterBranch').value='';
+  document.getElementById('filterBarber').value='';
+  ['filterDate','filterBranch','filterBarber'].forEach(id=>document.getElementById(id).classList.remove('active'));
+  document.getElementById('filterReset').style.opacity='0.4';
+  renderTable();
+}
+
+function getFilteredSorted() {
+  return getSortedRows().filter(c => {
+    if (_filterDate   && c.date   !== _filterDate)   return false;
+    if (_filterBranch && c.branch !== _filterBranch) return false;
+    if (_filterBarber && c.barber !== _filterBarber) return false;
+    return true;
+  });
+}
+
+/* ═══════════════════════════════════════════════
    TABLE RENDER
 ═══════════════════════════════════════════════ */
 function renderTable() {
-  const tbody  = document.getElementById('tableBody');
-  const cards  = document.getElementById('cardsWrap');
-  const empty  = document.getElementById('emptyState');
+  const tbody = document.getElementById('tableBody');
+  const cards = document.getElementById('cardsWrap');
+  const empty = document.getElementById('emptyState');
   document.getElementById('countBadge').textContent = customers.length + ' عميل';
 
-  if (!customers.length) {
-    tbody.innerHTML = ''; cards.innerHTML = '';
-    empty.style.display = 'block'; return;
-  }
-  empty.style.display = 'none';
+  populateFilters();
 
-  const canEdit    = hasPerm('canEdit');
-  const canDel     = hasPerm('canDelete');
-  const conflicted = getConflictingSeqs();
-  const TEXT_PKGS  = ['شعر','دقن','شعر + دقن'];
-  const pkgLabel   = p => TEXT_PKGS.includes(p) ? p : 'الباقة ' + p;
+  if (!customers.length) {
+    tbody.innerHTML=''; cards.innerHTML='';
+    empty.style.display='block'; return;
+  }
+  empty.style.display='none';
+
+  const canEdit   = hasPerm('canEdit');
+  const canDel    = hasPerm('canDelete');
+  const conflictMap = getConflictMap();
+  const TEXT_PKGS = ['شعر','دقن','شعر + دقن'];
+  const pkgLabel  = p => TEXT_PKGS.includes(p) ? p : 'الباقة ' + p;
+
+  const filtered = getFilteredSorted();
+
+  // Update filter count
+  const fc = document.getElementById('filterCount');
+  if (_filterDate||_filterBranch||_filterBarber) {
+    fc.textContent = `${filtered.length} من ${customers.length}`;
+  } else { fc.textContent=''; }
+
+  if (!filtered.length) {
+    tbody.innerHTML=`<tr><td colspan="9" style="text-align:center;padding:2rem;color:var(--text-muted)">لا توجد نتائج تطابق التصفية المحددة</td></tr>`;
+    cards.innerHTML=`<div style="text-align:center;padding:2rem;color:var(--text-muted)">لا توجد نتائج تطابق التصفية المحددة</div>`;
+    return;
+  }
+
+  // Group by date
+  const dateOrder=[], seenDates=new Set();
+  filtered.forEach(c=>{ if(c.date&&!seenDates.has(c.date)){seenDates.add(c.date);dateOrder.push(c.date);} });
 
   /* ── TABLE ROWS (desktop) ── */
-  tbody.innerHTML = customers.map((c,i) => {
-    const actions  = [];
-    if (canEdit) actions.push(`<button class="btn-sm" data-seq="${c.seq}" onclick="openEditResv(${c.seq})">✏️</button>`);
-    if (canDel)  actions.push(`<button class="btn-sm danger" data-seq="${c.seq}" onclick="confirmDel(${c.seq})">✕</button>`);
-    const isConflict = conflicted.has(c.seq);
-    const conflictBadge = isConflict ? `<span class="conflict-icon" title="تعارض في المواعيد">⚠️</span>` : '';
-    const rowClass  = [i===customers.length-1?'row-new':'', isConflict?'row-conflict':''].filter(Boolean).join(' ');
-    const tdStyle   = isConflict ? 'style="background-color:rgba(192,57,43,.15);border-top:1px solid rgba(192,57,43,.3);border-bottom:1px solid rgba(192,57,43,.3)"' : '';
-    const td1Style  = isConflict ? 'style="background-color:rgba(192,57,43,.15);border-top:1px solid rgba(192,57,43,.3);border-bottom:1px solid rgba(192,57,43,.3);border-right:3px solid #c0392b"' : '';
-    return `<tr class="${rowClass}">
-      <td class="td-seq" ${td1Style}>#${String(c.seq).padStart(3,'0')}</td>
-      <td ${tdStyle}>${esc(c.name)}</td>
-      <td dir="ltr" style="text-align:right${isConflict?';background-color:rgba(192,57,43,.15);border-top:1px solid rgba(192,57,43,.3);border-bottom:1px solid rgba(192,57,43,.3)':''}">${esc(c.phone)}</td>
-      <td class="td-date" ${tdStyle}>${esc(c.date||'')}</td>
-      <td class="td-time" ${tdStyle}>${conflictBadge}${esc(c.time)}</td>
-      <td ${tdStyle}><span class="td-pkg">${esc(pkgLabel(c.package))}</span></td>
-      <td class="td-branch" ${tdStyle}>${esc(c.branch||'')}</td>
-      <td ${tdStyle}>${esc(c.barber)}</td>
-      <td ${tdStyle}><div class="row-actions">${actions.join('')}</div></td>
-    </tr>`;
-  }).join('');
+  let tableHtml = '';
+  dateOrder.forEach(date => {
+    const dayEntries = filtered.filter(c=>c.date===date);
+    // Date group header row
+    tableHtml += `<tr class="date-group-header"><td colspan="9">📅 ${esc(date)} &nbsp;—&nbsp; ${dayEntries.length} حجز</td></tr>`;
+    dayEntries.forEach((c,i) => {
+      const actions=[];
+      if(canEdit) actions.push(`<button class="btn-sm" onclick="openEditResv(${c.seq})">✏️</button>`);
+      if(canDel)  actions.push(`<button class="btn-sm danger" onclick="confirmDel(${c.seq})">✕</button>`);
+      const conflicts = conflictMap.get(c.seq);
+      const isConflict = !!conflicts;
+      const conflictDetail = isConflict
+        ? conflicts.map(s=>`<span class="conflict-with">⚠️ مع #${String(s).padStart(3,'0')}</span>`).join('')
+        : '';
+      const tdStyle  = isConflict?'style="background-color:rgba(192,57,43,.15);border-top:1px solid rgba(192,57,43,.3);border-bottom:1px solid rgba(192,57,43,.3)"':'';
+      const td1Style = isConflict?'style="background-color:rgba(192,57,43,.15);border-top:1px solid rgba(192,57,43,.3);border-bottom:1px solid rgba(192,57,43,.3);border-right:3px solid #c0392b"':'';
+      const rowClass = [isConflict?'row-conflict':''].filter(Boolean).join(' ');
+      tableHtml += `<tr class="${rowClass}">
+        <td class="td-seq" ${td1Style}>#${String(c.seq).padStart(3,'0')}</td>
+        <td ${tdStyle}>${esc(c.name)}</td>
+        <td dir="ltr" style="text-align:right${isConflict?';background-color:rgba(192,57,43,.15);border-top:1px solid rgba(192,57,43,.3);border-bottom:1px solid rgba(192,57,43,.3)':''}">${esc(c.phone)}</td>
+        <td class="td-date" ${tdStyle}>${esc(c.date||'')}</td>
+        <td class="td-time" ${tdStyle}>${conflictDetail}${esc(c.time)}</td>
+        <td ${tdStyle}><span class="td-pkg">${esc(pkgLabel(c.package))}</span></td>
+        <td class="td-branch" ${tdStyle}>${esc(c.branch||'')}</td>
+        <td ${tdStyle}>${esc(c.barber)}</td>
+        <td ${tdStyle}><div class="row-actions">${actions.join('')}</div></td>
+      </tr>`;
+    });
+  });
+  tbody.innerHTML = tableHtml;
 
   /* ── CARDS (mobile) ── */
-  cards.innerHTML = customers.map((c,i) => {
-    const isConflict = conflicted.has(c.seq);
-    const actions = [];
-    if (canEdit) actions.push(`<button class="btn-sm" onclick="openEditResv(${c.seq})">✏️ تعديل</button>`);
-    if (canDel)  actions.push(`<button class="btn-sm danger" onclick="confirmDel(${c.seq})">✕ حذف</button>`);
-    return `
-    <div class="resv-card ${isConflict?'card-conflict':''} ${i===customers.length-1?'row-new':''}">
-      <div class="card-top">
-        <div class="card-name">${esc(c.name)}</div>
-        <div class="card-seq">#${String(c.seq).padStart(3,'0')}</div>
-      </div>
-      <div class="card-highlights">
-        <span class="card-pill pill-time">🕐 ${esc(c.time)}</span>
-        <span class="card-pill pill-barber">✂️ ${esc(c.barber)}</span>
-        ${isConflict?'<span class="card-pill pill-conflict">⚠️ تعارض في المواعيد</span>':''}
-      </div>
-      <div class="card-details">
-        <div class="card-detail">
-          <span class="card-detail-label">التاريخ</span>
-          <span class="card-detail-val">📅 ${esc(c.date||'')}</span>
-        </div>
-        <div class="card-detail">
-          <span class="card-detail-label">الباقة</span>
-          <span class="card-detail-val">${esc(pkgLabel(c.package))}</span>
-        </div>
-        <div class="card-detail">
-          <span class="card-detail-label">الفرع</span>
-          <span class="card-detail-val">${esc(c.branch||'')}</span>
-        </div>
-        <div class="card-detail">
-          <span class="card-detail-label">الجوال</span>
-          <span class="card-detail-val" dir="ltr" style="text-align:right">${esc(c.phone)}</span>
-        </div>
-      </div>
-      ${actions.length ? `<div class="card-actions">${actions.join('')}</div>` : ''}
+  let cardsHtml='';
+  dateOrder.forEach(date => {
+    const dayEntries = filtered.filter(c=>c.date===date);
+    cardsHtml += `<div class="date-sep-card">
+      <span>📅 ${esc(date)}</span>
+      <span class="date-sep-count">${dayEntries.length} حجز</span>
     </div>`;
-  }).join('');
+    dayEntries.forEach((c,i)=>{
+      const conflicts = conflictMap.get(c.seq);
+      const isConflict = !!conflicts;
+      const actions=[];
+      if(canEdit) actions.push(`<button class="btn-sm" onclick="openEditResv(${c.seq})">✏️ تعديل</button>`);
+      if(canDel)  actions.push(`<button class="btn-sm danger" onclick="confirmDel(${c.seq})">✕ حذف</button>`);
+      const conflictPills = isConflict
+        ? conflicts.map(s=>`<span class="card-pill pill-conflict">⚠️ تعارض مع #${String(s).padStart(3,'0')}</span>`).join('')
+        : '';
+      cardsHtml+=`
+      <div class="resv-card ${isConflict?'card-conflict':''}">
+        <div class="card-top">
+          <div class="card-name">${esc(c.name)}</div>
+          <div class="card-seq">#${String(c.seq).padStart(3,'0')}</div>
+        </div>
+        <div class="card-highlights">
+          <span class="card-pill pill-time">🕐 ${esc(c.time)}</span>
+          <span class="card-pill pill-barber">✂️ ${esc(c.barber)}</span>
+          ${conflictPills}
+        </div>
+        <div class="card-details">
+          <div class="card-detail"><span class="card-detail-label">التاريخ</span><span class="card-detail-val">📅 ${esc(c.date||'')}</span></div>
+          <div class="card-detail"><span class="card-detail-label">الباقة</span><span class="card-detail-val">${esc(pkgLabel(c.package))}</span></div>
+          <div class="card-detail"><span class="card-detail-label">الفرع</span><span class="card-detail-val">${esc(c.branch||'')}</span></div>
+          <div class="card-detail"><span class="card-detail-label">الجوال</span><span class="card-detail-val" dir="ltr" style="text-align:right">${esc(c.phone)}</span></div>
+        </div>
+        ${actions.length?`<div class="card-actions">${actions.join('')}</div>`:''}
+      </div>`;
+    });
+  });
+  cards.innerHTML = cardsHtml;
 }
 
 /* ═══════════════════════════════════════════════
@@ -1529,8 +1723,47 @@ function toggleExportMenu(e){e.stopPropagation();document.getElementById('export
 function closeExportMenu(){document.getElementById('exportMenu').classList.remove('open');}
 document.addEventListener('click',()=>closeExportMenu());
 
+/* ── EXPORT DATE MODAL ── */
+let _exportType = '';
+function openExportModal(type) {
+  if(!hasPerm('canExport')){showToast('🔒 ليس لديك صلاحية التصدير','var(--red)');return;}
+  if(!customers.length){showToast('⚠️ لا توجد بيانات','var(--red)');return;}
+  _exportType = type;
+  const titles = {csv:'📄 CSV', excel:'📊 Excel', word:'📝 Word', pdf:'📑 PDF'};
+  document.getElementById('exportModalTitle').textContent = 'تحميل كملف ' + (titles[type]||'');
+  document.getElementById('exportModalErr').classList.remove('show');
+
+  // Build date options
+  const dates = [...new Set(getSortedRows().map(c=>c.date).filter(Boolean))];
+  let html = `<div class="export-date-opt">
+    <input type="radio" name="expDate" id="expAll" value="__all__" checked>
+    <label for="expAll">📋 كل الأيام (${customers.length} حجز)</label>
+  </div>`;
+  dates.forEach((d,i)=>{
+    const cnt = customers.filter(c=>c.date===d).length;
+    html += `<div class="export-date-opt">
+      <input type="radio" name="expDate" id="expD${i}" value="${esc(d)}">
+      <label for="expD${i}">📅 ${esc(d)} (${cnt} حجز)</label>
+    </div>`;
+  });
+  document.getElementById('exportDateList').innerHTML = html;
+  document.getElementById('exportModal').classList.add('show');
+}
+function closeExportModal(){ document.getElementById('exportModal').classList.remove('show'); }
+document.addEventListener('DOMContentLoaded',()=>{
+  document.getElementById('exportModal').addEventListener('click',e=>{
+    if(e.target===e.currentTarget) closeExportModal();
+  });
+});
+function confirmExport(){
+  const sel = document.querySelector('input[name="expDate"]:checked');
+  if(!sel){ document.getElementById('exportModalErr').textContent='⚠️ اختر نطاق التاريخ'; document.getElementById('exportModalErr').classList.add('show'); return; }
+  const dateFilter = sel.value === '__all__' ? null : sel.value;
+  closeExportModal();
+  doExport(_exportType, dateFilter);
+}
+
 function getSortedRows(){
-  // Sort by date first, then time within each date
   return [...customers].sort((a,b)=>{
     const toISO=s=>s?s.split('/').reverse().join('-'):'';
     const da=toISO(a.date||''), db=toISO(b.date||'');
@@ -1540,183 +1773,148 @@ function getSortedRows(){
   });
 }
 
-// Group sorted rows by date, preserving time sort within each group
-function getGroupedExportData(){
-  const conflicted = getConflictingSeqs();
-  const TEXT_PKGS = ['شعر','دقن','شعر + دقن'];
-  const headers = ['رقم التسلسل','اسم العميل','رقم الجوال','الوقت','نوع الباقة','الفرع','اسم الحلاق','تعارض'];
-  const sorted  = getSortedRows();
-
-  // Build ordered list of unique dates
-  const dateOrder = [];
-  const seen = new Set();
-  sorted.forEach(c => { if(c.date && !seen.has(c.date)){ seen.add(c.date); dateOrder.push(c.date); } });
-
-  // Group
-  const groups = dateOrder.map(date => {
-    const entries = sorted.filter(c => c.date === date);
-    const rows = entries.map(c => [
-      '#'+String(c.seq).padStart(3,'0'), c.name, c.phone, c.time,
-      TEXT_PKGS.includes(c.package) ? c.package : 'الباقة '+c.package,
-      c.branch||'', c.barber,
-      conflicted.has(c.seq) ? '⚠️ تعارض' : ''
-    ]);
-    const flags = entries.map(c => conflicted.has(c.seq));
-    return { date, rows, flags };
+function getGroupedExportData(dateFilter){
+  const src = dateFilter ? customers.filter(c=>c.date===dateFilter) : customers;
+  const conflicted = getConflictingSeqs(src);
+  const TEXT_PKGS  = ['شعر','دقن','شعر + دقن'];
+  const headers    = ['رقم التسلسل','اسم العميل','رقم الجوال','الوقت','نوع الباقة','الفرع','اسم الحلاق','تعارض'];
+  const sorted     = [...src].sort((a,b)=>{
+    const toISO=s=>s?s.split('/').reverse().join('-'):'';
+    const da=toISO(a.date||''),db=toISO(b.date||'');
+    if(da!==db) return da<db?-1:1;
+    const ta=a.timeRaw||'00:00',tb=b.timeRaw||'00:00';
+    return ta<tb?-1:ta>tb?1:0;
   });
-
-  return { headers, groups };
+  const dateOrder=[], seen=new Set();
+  sorted.forEach(c=>{ if(c.date&&!seen.has(c.date)){seen.add(c.date);dateOrder.push(c.date);} });
+  const groups = dateOrder.map(date=>{
+    const entries = sorted.filter(c=>c.date===date);
+    const rows = entries.map(c=>[
+      '#'+String(c.seq).padStart(3,'0'), c.name, c.phone, c.time,
+      TEXT_PKGS.includes(c.package)?c.package:'الباقة '+c.package,
+      c.branch||'', c.barber,
+      conflicted.has(c.seq)?'⚠️ تعارض':''
+    ]);
+    const flags = entries.map(c=>conflicted.has(c.seq));
+    return {date,rows,flags};
+  });
+  return {headers, groups};
 }
 
-function doExport(type){
+function doExport(type, dateFilter){
   if(!hasPerm('canExport')){showToast('🔒 ليس لديك صلاحية التصدير','var(--red)');return;}
   if(!customers.length){showToast('⚠️ لا توجد بيانات','var(--red)');return;}
-  if(type==='csv')  exportAsCSV();
-  if(type==='excel')exportAsExcel();
-  if(type==='word') exportAsWord();
-  if(type==='pdf')  exportAsPDF();
+  if(type==='csv')  exportAsCSV(dateFilter);
+  if(type==='excel')exportAsExcel(dateFilter);
+  if(type==='word') exportAsWord(dateFilter);
+  if(type==='pdf')  exportAsPDF(dateFilter);
 }
 
-function exportAsCSV(){
-  const {headers, groups} = getGroupedExportData();
-  let lines = [headers.map(v=>`"${v}"`).join(',')];
-  groups.forEach(g => {
-    lines.push(`"📅 ${g.date}"` + ','.repeat(headers.length-1)); // date separator
-    g.rows.forEach(r => lines.push(r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')));
+function exportAsCSV(dateFilter){
+  const {headers,groups}=getGroupedExportData(dateFilter);
+  let lines=[headers.map(v=>`"${v}"`).join(',')];
+  groups.forEach(g=>{
+    lines.push(`"📅 ${g.date}"`+','.repeat(headers.length-1));
+    g.rows.forEach(r=>lines.push(r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')));
   });
-  const csv = '\uFEFF' + lines.join('\n');
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8;'}));
-  a.download = 'حلاق_حان_الوعد.csv'; a.click(); URL.revokeObjectURL(a.href);
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob(['\uFEFF'+lines.join('\n')],{type:'text/csv;charset=utf-8;'}));
+  a.download='حلاق_حان_الوعد.csv'; a.click(); URL.revokeObjectURL(a.href);
   showToast('✅ تم تحميل ملف CSV');
 }
 
-function exportAsExcel(){
-  const {headers, groups} = getGroupedExportData();
-  const wb = XLSX.utils.book_new();
-
-  // One sheet per date
-  groups.forEach(g => {
-    const ws = XLSX.utils.aoa_to_sheet([headers, ...g.rows]);
-    ws['!cols'] = headers.map(()=>({wch:20}));
-    // Red fill for conflicts
-    g.rows.forEach((r,i) => {
+function exportAsExcel(dateFilter){
+  const {headers,groups}=getGroupedExportData(dateFilter);
+  const wb=XLSX.utils.book_new();
+  groups.forEach(g=>{
+    const ws=XLSX.utils.aoa_to_sheet([headers,...g.rows]);
+    ws['!cols']=headers.map(()=>({wch:20}));
+    g.rows.forEach((r,i)=>{
       if(!g.flags[i]) return;
-      r.forEach((_,j) => {
-        const cell = XLSX.utils.encode_cell({r:i+1, c:j});
+      r.forEach((_,j)=>{
+        const cell=XLSX.utils.encode_cell({r:i+1,c:j});
         if(!ws[cell]) return;
-        ws[cell].s = {fill:{fgColor:{rgb:'FFD6D6'},patternType:'solid'},font:{bold:true}};
+        ws[cell].s={fill:{fgColor:{rgb:'FFD6D6'},patternType:'solid'},font:{bold:true}};
       });
     });
-    // Sheet name: use date as-is (max 31 chars for Excel)
-    const sheetName = g.date.replace(/\//g,'-').slice(0,31);
-    XLSX.utils.book_append_sheet(wb, ws, sheetName);
+    XLSX.utils.book_append_sheet(wb,ws,g.date.replace(/\//g,'-').slice(0,31));
   });
-
-  XLSX.writeFile(wb, 'حلاق_حان_الوعد.xlsx');
+  XLSX.writeFile(wb,'حلاق_حان_الوعد.xlsx');
   showToast('✅ تم تحميل ملف Excel');
 }
 
-function exportAsWord(){
-  const {headers, groups} = getGroupedExportData();
-  const thS = 'border:1px solid #999;padding:6px 10px;background:#1a1a1a;color:#c9a84c;font-weight:bold;text-align:right;font-size:12px';
-  const tdS = 'border:1px solid #ccc;padding:6px 10px;text-align:right;font-size:11px';
-  const tdC = 'border:1px solid #c0392b;padding:6px 10px;text-align:right;background:#ffd6d6;color:#7b0000;font-weight:bold;font-size:11px';
-  const hasAnyConflict = groups.some(g=>g.flags.some(Boolean));
-
-  let tablesHtml = '';
-  groups.forEach(g => {
-    const ths = headers.map(h=>`<th style="${thS}">${h}</th>`).join('');
-    const trs = g.rows.map((r,i) => {
-      const isC = g.flags[i];
+function exportAsWord(dateFilter){
+  const {headers,groups}=getGroupedExportData(dateFilter);
+  const thS='border:1px solid #999;padding:6px 10px;background:#1a1a1a;color:#c9a84c;font-weight:bold;text-align:right;font-size:12px';
+  const tdS='border:1px solid #ccc;padding:6px 10px;text-align:right;font-size:11px';
+  const tdC='border:1px solid #c0392b;padding:6px 10px;text-align:right;background:#ffd6d6;color:#7b0000;font-weight:bold;font-size:11px';
+  const hasAny=groups.some(g=>g.flags.some(Boolean));
+  let tables='';
+  groups.forEach(g=>{
+    const ths=headers.map(h=>`<th style="${thS}">${h}</th>`).join('');
+    const trs=g.rows.map((r,i)=>{
+      const isC=g.flags[i];
       return `<tr style="${isC?'background:#ffd6d6':''}">${r.map(v=>`<td style="${isC?tdC:tdS}">${v}</td>`).join('')}</tr>`;
     }).join('');
-    tablesHtml += `
-      <h3 style="color:#9a7530;margin:24px 0 8px;font-size:14px;border-bottom:2px solid #c9a84c;padding-bottom:4px">
-        📅 ${g.date} &nbsp;—&nbsp; ${g.rows.length} حجز
-      </h3>
-      <table style="width:100%;border-collapse:collapse;margin-bottom:8px">
-        <thead><tr>${ths}</tr></thead><tbody>${trs}</tbody>
-      </table>`;
+    tables+=`<h3 style="color:#9a7530;margin:24px 0 8px;font-size:14px;border-bottom:2px solid #c9a84c;padding-bottom:4px">📅 ${g.date} — ${g.rows.length} حجز</h3>
+    <table style="width:100%;border-collapse:collapse;margin-bottom:8px"><thead><tr>${ths}</tr></thead><tbody>${trs}</tbody></table>`;
   });
-
-  const html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
-    <head><meta charset="utf-8">
-    <style>body{font-family:Arial,sans-serif;direction:rtl;padding:20px}</style>
-    </head><body>
-    <h2 style="color:#c9a84c;text-align:center;font-size:18px">حلاق حان الوعد — سجل العملاء</h2>
-    <p style="text-align:center;color:#666;font-size:12px;margin-bottom:4px">تاريخ التصدير: ${new Date().toLocaleDateString('ar-SA')}</p>
-    ${hasAnyConflict?'<p style="color:#c0392b;font-size:11px;text-align:right;margin-bottom:16px">⚠️ الصفوف المميزة بالأحمر تحتوي على تعارض في المواعيد</p>':''}
-    ${tablesHtml}
-    </body></html>`;
-
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob(['\ufeff'+html],{type:'application/msword;charset=utf-8'}));
-  a.download = 'حلاق_حان_الوعد.doc'; a.click(); URL.revokeObjectURL(a.href);
+  const html=`<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
+  <head><meta charset="utf-8"><style>body{font-family:Arial,sans-serif;direction:rtl;padding:20px}</style></head><body>
+  <h2 style="color:#c9a84c;text-align:center;font-size:18px">حلاق حان الوعد — سجل العملاء</h2>
+  <p style="text-align:center;color:#666;font-size:12px">تاريخ التصدير: ${new Date().toLocaleDateString('ar-SA')}</p>
+  ${hasAny?'<p style="color:#c0392b;font-size:11px;text-align:right;margin-bottom:16px">⚠️ الصفوف المميزة بالأحمر تحتوي على تعارض في المواعيد</p>':''}
+  ${tables}</body></html>`;
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob(['\ufeff'+html],{type:'application/msword;charset=utf-8'}));
+  a.download='حلاق_حان_الوعد.doc'; a.click(); URL.revokeObjectURL(a.href);
   showToast('✅ تم تحميل ملف Word');
 }
 
-function exportAsPDF(){
-  const {headers, groups} = getGroupedExportData();
-  const thS = 'background:#1a1a1a;color:#c9a84c;padding:7px 10px;border:1px solid #444;font-size:11px;text-align:right';
-  const tdS = 'padding:6px 10px;border:1px solid #ddd;font-size:10px;text-align:right';
-  const tdC = 'padding:6px 10px;border:1px solid #c0392b;font-size:10px;text-align:right;background:#ffd6d6;color:#7b0000;font-weight:bold';
-  const hasAnyConflict = groups.some(g=>g.flags.some(Boolean));
-  const now = new Date().toLocaleDateString('ar-SA',{year:'numeric',month:'long',day:'numeric'});
-
-  let tablesHtml = '';
-  groups.forEach((g,gi) => {
-    const ths = headers.map(h=>`<th style="${thS}">${h}</th>`).join('');
-    const trs = g.rows.map((r,i) => {
-      const isC = g.flags[i];
-      const trBg = isC ? '#ffd6d6' : (i%2===1?'#f9f9f9':'#fff');
-      return `<tr style="background:${trBg}">${r.map(v=>`<td style="${isC?tdC:tdS}">${v}</td>`).join('')}</tr>`;
+function exportAsPDF(dateFilter){
+  const {headers,groups}=getGroupedExportData(dateFilter);
+  const thS='background:#1a1a1a;color:#c9a84c;padding:7px 10px;border:1px solid #444;font-size:11px;text-align:right';
+  const tdS='padding:6px 10px;border:1px solid #ddd;font-size:10px;text-align:right';
+  const tdC='padding:6px 10px;border:1px solid #c0392b;font-size:10px;text-align:right;background:#ffd6d6;color:#7b0000;font-weight:bold';
+  const hasAny=groups.some(g=>g.flags.some(Boolean));
+  const now=new Date().toLocaleDateString('ar-SA',{year:'numeric',month:'long',day:'numeric'});
+  const total=groups.reduce((s,g)=>s+g.rows.length,0);
+  let tables='';
+  groups.forEach((g,gi)=>{
+    const ths=headers.map(h=>`<th style="${thS}">${h}</th>`).join('');
+    const trs=g.rows.map((r,i)=>{
+      const isC=g.flags[i];
+      return `<tr style="background:${isC?'#ffd6d6':i%2===1?'#f9f9f9':'#fff'}">${r.map(v=>`<td style="${isC?tdC:tdS}">${v}</td>`).join('')}</tr>`;
     }).join('');
-    tablesHtml += `
-      <div class="day-block" style="${gi>0?'margin-top:28px':''}">
-        <div class="day-header">
-          <span>📅 ${g.date}</span>
-          <span class="day-count">${g.rows.length} حجز</span>
-        </div>
-        <table><thead><tr>${ths}</tr></thead><tbody>${trs}</tbody></table>
-      </div>`;
+    tables+=`<div class="day-block" style="${gi>0?'margin-top:28px':''}">
+      <div class="day-header"><span>📅 ${g.date}</span><span class="day-count">${g.rows.length} حجز</span></div>
+      <table><thead><tr>${ths}</tr></thead><tbody>${trs}</tbody></table>
+    </div>`;
   });
-
-  const totalCount = groups.reduce((s,g)=>s+g.rows.length,0);
-  const printWin = window.open('','_blank','width=1000,height=750');
-  printWin.document.write(`<!DOCTYPE html><html lang="ar" dir="rtl">
-  <head><meta charset="utf-8">
-  <title>حلاق حان الوعد — سجل العملاء</title>
-  <style>
-    *{margin:0;padding:0;box-sizing:border-box}
-    body{font-family:'Segoe UI',Tahoma,Arial,sans-serif;direction:rtl;background:#fff;color:#111;padding:20px}
-    h1{font-size:18px;color:#9a7530;text-align:center;margin-bottom:3px}
-    .meta{text-align:center;color:#777;font-size:11px;margin-bottom:4px}
-    .total{font-size:11px;color:#555;text-align:right;margin-bottom:16px}
-    .conflict-note{color:#c0392b;font-size:10px;text-align:right;margin-bottom:12px;padding:5px 8px;border:1px solid #ffb3b3;background:#fff5f5}
-    .day-header{display:flex;justify-content:space-between;align-items:center;background:#f5f0e8;border:1px solid #c9a84c;border-bottom:none;padding:7px 12px}
-    .day-header span{font-size:13px;font-weight:bold;color:#7a5c1e}
-    .day-count{font-size:11px;color:#9a7530;background:#fff;border:1px solid #c9a84c;padding:2px 8px}
-    table{width:100%;border-collapse:collapse}
-    @media print{body{padding:8px}.day-block{page-break-inside:avoid}button{display:none!important}}
-  </style>
-  </head><body>
+  const pw=window.open('','_blank','width=1000,height=750');
+  pw.document.write(`<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="utf-8">
+  <title>حلاق حان الوعد</title><style>
+  *{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI',Tahoma,Arial,sans-serif;direction:rtl;background:#fff;color:#111;padding:20px}
+  h1{font-size:18px;color:#9a7530;text-align:center;margin-bottom:3px}.meta{text-align:center;color:#777;font-size:11px;margin-bottom:4px}
+  .total{font-size:11px;color:#555;text-align:right;margin-bottom:16px}
+  .conflict-note{color:#c0392b;font-size:10px;text-align:right;margin-bottom:12px;padding:5px 8px;border:1px solid #ffb3b3;background:#fff5f5}
+  .day-header{display:flex;justify-content:space-between;align-items:center;background:#f5f0e8;border:1px solid #c9a84c;border-bottom:none;padding:7px 12px}
+  .day-header span{font-size:13px;font-weight:bold;color:#7a5c1e}.day-count{font-size:11px;color:#9a7530;background:#fff;border:1px solid #c9a84c;padding:2px 8px}
+  table{width:100%;border-collapse:collapse}
+  @media print{body{padding:8px}.day-block{page-break-inside:avoid}button{display:none!important}}
+  </style></head><body>
   <h1>✂ حلاق حان الوعد</h1>
-  <p class="meta">سجل العملاء &mdash; تاريخ التصدير: ${now}</p>
-  <p class="total">إجمالي الحجوزات: ${totalCount} حجز في ${groups.length} ${groups.length===1?'يوم':'أيام'}</p>
-  ${hasAnyConflict?'<p class="conflict-note">⚠️ الصفوف المميزة بالأحمر تحتوي على تعارض في المواعيد (أقل من 30 دقيقة بين موعدين لنفس الحلاق)</p>':''}
-  ${tablesHtml}
-  <br>
-  <div style="text-align:center">
-    <button onclick="window.print()" style="padding:8px 28px;background:#c9a84c;border:none;color:#111;font-size:13px;cursor:pointer;font-family:inherit">
-      🖨️ طباعة / حفظ كـ PDF
-    </button>
-  </div>
-  <script>setTimeout(()=>window.print(),400);<\/script>
-  </body></html>`);
-  printWin.document.close();
+  <p class="meta">سجل العملاء — تاريخ التصدير: ${now}</p>
+  <p class="total">إجمالي الحجوزات: ${total} حجز في ${groups.length} ${groups.length===1?'يوم':'أيام'}</p>
+  ${hasAny?'<p class="conflict-note">⚠️ الصفوف المميزة بالأحمر تحتوي على تعارض في المواعيد</p>':''}
+  ${tables}<br>
+  <div style="text-align:center"><button onclick="window.print()" style="padding:8px 28px;background:#c9a84c;border:none;color:#111;font-size:13px;cursor:pointer;font-family:inherit">🖨️ طباعة / حفظ كـ PDF</button></div>
+  <script>setTimeout(()=>window.print(),400);<\/script></body></html>`);
+  pw.document.close();
   showToast('✅ جاري فتح نافذة PDF');
 }
+
+
 
 /* ═══════════════════════════════════════════════
    MODALS
