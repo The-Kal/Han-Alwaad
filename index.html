@@ -281,7 +281,8 @@ tbody tr.row-conflict:hover td{
   display:flex;align-items:center;justify-content:space-between;
 }
 .date-sep-count{font-size:.72rem;color:var(--text-muted);font-weight:400}
-.export-menu{position:absolute;top:calc(100% + 4px);left:0;background:var(--bg-card);border:1px solid var(--border-gold);min-width:160px;z-index:500;display:none;flex-direction:column}
+.export-wrap{position:relative;display:inline-flex}
+.export-menu{position:absolute;top:calc(100% + 4px);right:0;background:var(--bg-card);border:1px solid var(--border-gold);min-width:160px;z-index:500;display:none;flex-direction:column;box-shadow:0 8px 24px rgba(0,0,0,.4)}
 .export-menu.open{display:flex}
 .export-menu button{padding:.65rem 1rem;background:none;border:none;border-bottom:1px solid var(--border);color:var(--text-secondary);font-family:'Tajawal',sans-serif;font-size:.85rem;cursor:pointer;text-align:right;transition:background .15s,color .15s}
 .export-menu button:last-child{border-bottom:none}
