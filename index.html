@@ -140,6 +140,12 @@ tbody tr.row-conflict:hover td{
   background-color:rgba(192,57,43,.22)!important;
 }
 .conflict-icon{font-size:.75rem;margin-right:.3rem;vertical-align:middle}
+/* SORTABLE COLUMNS */
+thead th.sortable{cursor:pointer;user-select:none;transition:color .15s}
+thead th.sortable:hover{color:var(--gold-light)}
+thead th.sort-asc::after{content:' ▲';font-size:.65rem;color:var(--gold)}
+thead th.sort-desc::after{content:' ▼';font-size:.65rem;color:var(--gold)}
+thead th.sort-asc,thead th.sort-desc{color:var(--gold-light)}
 .td-seq{color:var(--gold);font-weight:700}
 .td-pkg{display:inline-block;padding:.2rem .6rem;background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.2);color:var(--gold-light);font-size:.78rem;font-weight:600}
 .td-time,.td-date{font-size:.83rem;color:var(--text-secondary)}
@@ -493,8 +499,8 @@ tbody tr.row-conflict:hover td{
 
   <nav class="admin-tabs">
     <button class="tab-btn active" id="tabCustomers" onclick="switchTab('customers',this)">📋 العملاء</button>
-    <button class="tab-btn" id="tabAdmins"     style="display:none" onclick="switchTab('admins',this)">👥 المشرفون</button>
-    <button class="tab-btn" id="tabBarbers"    style="display:none" onclick="switchTab('barbers',this)">💈 الحلاقون</button>
+    <button class="tab-btn" id="tabAdmins"     style="display:none" onclick="switchTab('admins',this)">👥 المشرفين</button>
+    <button class="tab-btn" id="tabBarbers"    style="display:none" onclick="switchTab('barbers',this)">💈 الحلاقين</button>
     <button class="tab-btn" id="tabSettings"   onclick="switchTab('settings',this)">⚙️ الإعدادات</button>
   </nav>
 
@@ -602,9 +608,14 @@ tbody tr.row-conflict:hover td{
         </div>
         <div class="table-wrap">
           <table>
-            <thead><tr>
-              <th>رقم التسلسل</th><th>اسم العميل</th><th>رقم الجوال</th>
-              <th>التاريخ</th><th>الوقت</th><th>الباقة</th><th>الفرع</th><th>الحلاق</th><th>إجراءات</th>
+            <thead><tr id="tableHead">
+              <th class="sortable" onclick="sortBy('seq')" id="th_seq">رقم التسلسل</th><th>اسم العميل</th><th>رقم الجوال</th>
+              <th class="sortable" onclick="sortBy('date')"   id="th_date">التاريخ</th>
+              <th class="sortable" onclick="sortBy('time')"   id="th_time">الوقت</th>
+              <th class="sortable" onclick="sortBy('package')" id="th_package">الباقة</th>
+              <th class="sortable" onclick="sortBy('branch')" id="th_branch">الفرع</th>
+              <th class="sortable" onclick="sortBy('barber')" id="th_barber">الحلاق</th>
+              <th>إجراءات</th>
             </tr></thead>
             <tbody id="tableBody"></tbody>
           </table>
@@ -625,7 +636,7 @@ tbody tr.row-conflict:hover td{
       </div>
       <div class="two-col">
         <div class="panel-card gtd">
-          <h3>المشرفون الحاليون</h3>
+          <h3>المشرفين الحاليين</h3>
           <div id="adminListContainer"></div>
         </div>
         <div class="panel-card gt">
@@ -867,7 +878,18 @@ tbody tr.row-conflict:hover td{
 <div class="modal-backdrop" id="exportModal">
   <div class="modal" style="max-width:420px">
     <h3 id="exportModalTitle">📥 تحميل كملف</h3>
-    <p style="color:var(--text-muted);font-size:.85rem;margin-bottom:1.25rem">اختر نطاق التاريخ للتصدير:</p>
+    <p style="color:var(--text-muted);font-size:.85rem;margin-bottom:1rem">اختر نطاق البيانات للتصدير:</p>
+    <div style="display:flex;gap:.6rem;flex-wrap:wrap;margin-bottom:1rem">
+      <select id="expFilterBranch" style="flex:1;min-width:130px;padding:.5rem .7rem;background:var(--bg-input);border:1px solid var(--border);color:var(--text-secondary);font-family:'Tajawal',sans-serif;font-size:.85rem;outline:none;direction:rtl">
+        <option value="">🏪 كل الفروع</option>
+        <option value="الفرع الأول">الفرع الأول</option>
+        <option value="الفرع الثاني">الفرع الثاني</option>
+      </select>
+      <select id="expFilterBarber" style="flex:1;min-width:130px;padding:.5rem .7rem;background:var(--bg-input);border:1px solid var(--border);color:var(--text-secondary);font-family:'Tajawal',sans-serif;font-size:.85rem;outline:none;direction:rtl">
+        <option value="">✂️ كل الحلاقين</option>
+      </select>
+    </div>
+    <p style="font-size:.78rem;color:var(--text-muted);margin-bottom:.75rem">اختر اليوم:</p>
     <div class="export-date-list" id="exportDateList"></div>
     <div class="alert-box alert-error" id="exportModalErr"></div>
     <div class="modal-actions">
@@ -1493,6 +1515,31 @@ function clearForm() {
 function showPhHint(msg,isErr){const h=document.getElementById('phoneHint');h.textContent=msg;isErr?h.classList.add('err'):h.classList.remove('err');}
 
 /* ═══════════════════════════════════════════════
+   SORT STATE
+═══════════════════════════════════════════════ */
+let _sortCol = 'time';   // default: time
+let _sortDir = 'asc';    // 'asc' | 'desc'
+
+function sortBy(col) {
+  if (_sortCol === col) {
+    _sortDir = _sortDir === 'asc' ? 'desc' : 'asc';
+  } else {
+    _sortCol = col;
+    _sortDir = 'asc';
+  }
+  renderTable();
+}
+
+function updateSortHeaders() {
+  ['seq','date','time','package','branch','barber'].forEach(col => {
+    const th = document.getElementById('th_' + col);
+    if (!th) return;
+    th.classList.remove('sort-asc','sort-desc');
+    if (_sortCol === col) th.classList.add(_sortDir === 'asc' ? 'sort-asc' : 'sort-desc');
+  });
+}
+
+/* ═══════════════════════════════════════════════
    FILTERS
 ═══════════════════════════════════════════════ */
 let _filterDate='', _filterBranch='', _filterBarber='';
@@ -1540,11 +1587,30 @@ function resetFilters() {
 }
 
 function getFilteredSorted() {
-  return getSortedRows().filter(c => {
+  const base = customers.filter(c => {
     if (_filterDate   && c.date   !== _filterDate)   return false;
     if (_filterBranch && c.branch !== _filterBranch) return false;
     if (_filterBarber && c.barber !== _filterBarber) return false;
     return true;
+  });
+  const toISO = s => s ? s.split('/').reverse().join('-') : '';
+  const TEXT_PKGS = ['شعر','دقن','شعر + دقن'];
+  const pkgOrder = v => TEXT_PKGS.includes(v) ? '99_'+v : String(v).padStart(3,'0');
+  return base.sort((a,b) => {
+    let va='', vb='';
+    if (_sortCol==='seq')     { va=String(a.seq).padStart(6,'0'); vb=String(b.seq).padStart(6,'0'); }
+    if (_sortCol==='date')    { va=toISO(a.date||'');         vb=toISO(b.date||''); }
+    if (_sortCol==='time')    { va=a.timeRaw||'00:00';        vb=b.timeRaw||'00:00'; }
+    if (_sortCol==='package') { va=pkgOrder(a.package||'');   vb=pkgOrder(b.package||''); }
+    if (_sortCol==='branch')  { va=a.branch||'';              vb=b.branch||''; }
+    if (_sortCol==='barber')  { va=a.barber||'';              vb=b.barber||''; }
+    if (va < vb) return _sortDir==='asc' ? -1 : 1;
+    if (va > vb) return _sortDir==='asc' ?  1 : -1;
+    // Tiebreaker: always date then time
+    const da=toISO(a.date||''), db=toISO(b.date||'');
+    if (da!==db) return da<db?-1:1;
+    const ta=a.timeRaw||'00:00', tb=b.timeRaw||'00:00';
+    return ta<tb?-1:ta>tb?1:0;
   });
 }
 
@@ -1558,6 +1624,7 @@ function renderTable() {
   document.getElementById('countBadge').textContent = customers.length + ' عميل';
 
   populateFilters();
+  updateSortHeaders();
 
   if (!customers.length) {
     tbody.innerHTML=''; cards.innerHTML='';
@@ -1748,6 +1815,14 @@ function openExportModal(type) {
     </div>`;
   });
   document.getElementById('exportDateList').innerHTML = html;
+  // Populate barber dropdown
+  const barbers = [...new Set(customers.map(c=>c.barber).filter(Boolean))].sort();
+  const expBarberEl = document.getElementById('expFilterBarber');
+  expBarberEl.innerHTML = '<option value="">✂️ كل الحلاقين</option>' +
+    barbers.map(b=>`<option value="${esc(b)}">${esc(b)}</option>`).join('');
+  // Reset filters
+  document.getElementById('expFilterBranch').value = '';
+  expBarberEl.value = '';
   document.getElementById('exportModal').classList.add('show');
 }
 function closeExportModal(){ document.getElementById('exportModal').classList.remove('show'); }
@@ -1759,9 +1834,11 @@ document.addEventListener('DOMContentLoaded',()=>{
 function confirmExport(){
   const sel = document.querySelector('input[name="expDate"]:checked');
   if(!sel){ document.getElementById('exportModalErr').textContent='⚠️ اختر نطاق التاريخ'; document.getElementById('exportModalErr').classList.add('show'); return; }
-  const dateFilter = sel.value === '__all__' ? null : sel.value;
+  const dateFilter   = sel.value === '__all__' ? null : sel.value;
+  const branchFilter = document.getElementById('expFilterBranch').value || null;
+  const barberFilter = document.getElementById('expFilterBarber').value  || null;
   closeExportModal();
-  doExport(_exportType, dateFilter);
+  doExport(_exportType, dateFilter, branchFilter, barberFilter);
 }
 
 function getSortedRows(){
@@ -1774,8 +1851,13 @@ function getSortedRows(){
   });
 }
 
-function getGroupedExportData(dateFilter){
-  const src = dateFilter ? customers.filter(c=>c.date===dateFilter) : customers;
+function getGroupedExportData(dateFilter, branchFilter, barberFilter){
+  let src = dateFilter   ? customers.filter(c=>c.date===dateFilter)   : customers;
+  if (branchFilter) src = src.filter(c=>c.branch===branchFilter);
+  if (barberFilter) src = src.filter(c=>c.barber===barberFilter);
+  // Build conflict map for detailed refs
+  const conflictMapExp = new Map();
+  for(let i=0;i<src.length;i++){const a=src[i];if(!a.timeRaw)continue;for(let j=i+1;j<src.length;j++){const b=src[j];if(!b.timeRaw)continue;if(a.barber===b.barber&&a.date===b.date&&Math.abs(timeToMins(a.timeRaw)-timeToMins(b.timeRaw))<SLOT_MIN){if(!conflictMapExp.has(a.seq))conflictMapExp.set(a.seq,[]);if(!conflictMapExp.has(b.seq))conflictMapExp.set(b.seq,[]);conflictMapExp.get(a.seq).push(b.seq);conflictMapExp.get(b.seq).push(a.seq);}}}
   const conflicted = getConflictingSeqs(src);
   const TEXT_PKGS  = ['شعر','دقن','شعر + دقن'];
   const headers    = ['رقم التسلسل','اسم العميل','رقم الجوال','الوقت','نوع الباقة','الفرع','اسم الحلاق','تعارض'];
@@ -1794,7 +1876,7 @@ function getGroupedExportData(dateFilter){
       '#'+String(c.seq).padStart(3,'0'), c.name, c.phone, c.time,
       TEXT_PKGS.includes(c.package)?c.package:'الباقة '+c.package,
       c.branch||'', c.barber,
-      conflicted.has(c.seq)?'⚠️ تعارض':''
+      conflictMapExp.has(c.seq)?'⚠️ مع '+conflictMapExp.get(c.seq).map(s=>'#'+String(s).padStart(3,'0')).join(', '):'' 
     ]);
     const flags = entries.map(c=>conflicted.has(c.seq));
     return {date,rows,flags};
@@ -1802,17 +1884,17 @@ function getGroupedExportData(dateFilter){
   return {headers, groups};
 }
 
-function doExport(type, dateFilter){
+function doExport(type, dateFilter, branchFilter, barberFilter){
   if(!hasPerm('canExport')){showToast('🔒 ليس لديك صلاحية التصدير','var(--red)');return;}
   if(!customers.length){showToast('⚠️ لا توجد بيانات','var(--red)');return;}
-  if(type==='csv')  exportAsCSV(dateFilter);
-  if(type==='excel')exportAsExcel(dateFilter);
-  if(type==='word') exportAsWord(dateFilter);
-  if(type==='pdf')  exportAsPDF(dateFilter);
+  if(type==='csv')  exportAsCSV(dateFilter, branchFilter, barberFilter);
+  if(type==='excel')exportAsExcel(dateFilter, branchFilter, barberFilter);
+  if(type==='word') exportAsWord(dateFilter, branchFilter, barberFilter);
+  if(type==='pdf')  exportAsPDF(dateFilter, branchFilter, barberFilter);
 }
 
-function exportAsCSV(dateFilter){
-  const {headers,groups}=getGroupedExportData(dateFilter);
+function exportAsCSV(dateFilter, branchFilter, barberFilter){
+  const {headers,groups}=getGroupedExportData(dateFilter, branchFilter, barberFilter);
   let lines=[headers.map(v=>`"${v}"`).join(',')];
   groups.forEach(g=>{
     lines.push(`"📅 ${g.date}"`+','.repeat(headers.length-1));
@@ -1824,8 +1906,8 @@ function exportAsCSV(dateFilter){
   showToast('✅ تم تحميل ملف CSV');
 }
 
-function exportAsExcel(dateFilter){
-  const {headers,groups}=getGroupedExportData(dateFilter);
+function exportAsExcel(dateFilter, branchFilter, barberFilter){
+  const {headers,groups}=getGroupedExportData(dateFilter, branchFilter, barberFilter);
   const wb=XLSX.utils.book_new();
   groups.forEach(g=>{
     const ws=XLSX.utils.aoa_to_sheet([headers,...g.rows]);
@@ -1844,8 +1926,8 @@ function exportAsExcel(dateFilter){
   showToast('✅ تم تحميل ملف Excel');
 }
 
-function exportAsWord(dateFilter){
-  const {headers,groups}=getGroupedExportData(dateFilter);
+function exportAsWord(dateFilter, branchFilter, barberFilter){
+  const {headers,groups}=getGroupedExportData(dateFilter, branchFilter, barberFilter);
   const thS='border:1px solid #999;padding:6px 10px;background:#1a1a1a;color:#c9a84c;font-weight:bold;text-align:right;font-size:12px';
   const tdS='border:1px solid #ccc;padding:6px 10px;text-align:right;font-size:11px';
   const tdC='border:1px solid #c0392b;padding:6px 10px;text-align:right;background:#ffd6d6;color:#7b0000;font-weight:bold;font-size:11px';
@@ -1872,8 +1954,8 @@ function exportAsWord(dateFilter){
   showToast('✅ تم تحميل ملف Word');
 }
 
-function exportAsPDF(dateFilter){
-  const {headers,groups}=getGroupedExportData(dateFilter);
+function exportAsPDF(dateFilter, branchFilter, barberFilter){
+  const {headers,groups}=getGroupedExportData(dateFilter, branchFilter, barberFilter);
   const thS='background:#1a1a1a;color:#c9a84c;padding:7px 10px;border:1px solid #444;font-size:11px;text-align:right';
   const tdS='padding:6px 10px;border:1px solid #ddd;font-size:10px;text-align:right';
   const tdC='padding:6px 10px;border:1px solid #c0392b;font-size:10px;text-align:right;background:#ffd6d6;color:#7b0000;font-weight:bold';
