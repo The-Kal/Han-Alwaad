@@ -222,15 +222,16 @@ thead th.sort-asc,thead th.sort-desc{color:var(--gold-light)}
 
 /* DATE GROUP HEADER in table */
 .date-group-header td{
-  background:#0e0e0e!important;
-  color:var(--gold)!important;
-  font-size:.8rem;font-weight:700;
-  padding:.55rem 1rem!important;
-  border-top:2px solid var(--border-gold)!important;
+  background:linear-gradient(90deg,rgba(201,168,76,.12),rgba(201,168,76,.04))!important;
+  color:var(--gold-light)!important;
+  font-size:.88rem;font-weight:800;
+  padding:.8rem 1.2rem!important;
+  border-top:2px solid var(--gold)!important;
   border-bottom:1px solid var(--border-gold)!important;
-  letter-spacing:.04em;
+  letter-spacing:.06em;
+  text-shadow:0 0 20px rgba(201,168,76,.2);
 }
-.date-group-header:first-child td{ border-top:none!important; }
+.date-group-header:first-child td{ border-top:2px solid var(--gold)!important; }
 
 /* FILTER BAR */
 .filter-bar{
@@ -281,12 +282,17 @@ thead th.sort-asc,thead th.sort-desc{color:var(--gold-light)}
 
 /* MOBILE DATE SEPARATOR CARD */
 .date-sep-card{
-  background:#0e0e0e;border:1px solid var(--border-gold);
-  border-right:3px solid var(--gold);padding:.55rem 1rem;
-  font-size:.85rem;font-weight:700;color:var(--gold);
+  background:linear-gradient(90deg,rgba(201,168,76,.14),rgba(201,168,76,.03));
+  border:1px solid var(--gold);
+  border-right:4px solid var(--gold);
+  padding:.75rem 1rem;margin:.25rem 0;
+  font-size:.9rem;font-weight:800;color:var(--gold-light);
   display:flex;align-items:center;justify-content:space-between;
+  letter-spacing:.04em;
 }
-.date-sep-count{font-size:.72rem;color:var(--text-muted);font-weight:400}
+.date-sep-count{font-size:.78rem;color:var(--gold-dark);font-weight:600;
+  background:rgba(201,168,76,.12);border:1px solid var(--border-gold);
+  padding:.1rem .5rem;}
 .export-wrap{position:relative;display:inline-flex}
 .export-menu{position:absolute;top:calc(100% + 4px);right:0;background:var(--bg-card);border:1px solid var(--border-gold);min-width:160px;z-index:500;display:none;flex-direction:column;box-shadow:0 8px 24px rgba(0,0,0,.4)}
 .export-menu.open{display:flex}
@@ -1597,18 +1603,27 @@ function getFilteredSorted() {
   const TEXT_PKGS = ['شعر','دقن','شعر + دقن'];
   const pkgOrder = v => TEXT_PKGS.includes(v) ? '99_'+v : String(v).padStart(3,'0');
   return base.sort((a,b) => {
+    const toI = s => s ? s.split('/').reverse().join('-') : '';
+    // Date is ALWAYS the primary sort — groups never break across dates
+    const da=toI(a.date||''), db=toI(b.date||'');
+    if (da !== db) return da < db ? -1 : 1;
+
+    // If sorting by date itself, second key is time
+    if (_sortCol === 'date') {
+      const ta=a.timeRaw||'00:00', tb=b.timeRaw||'00:00';
+      return _sortDir==='asc' ? (ta<tb?-1:ta>tb?1:0) : (ta>tb?-1:ta<tb?1:0);
+    }
+
+    // Within the same date, sort by chosen column
     let va='', vb='';
     if (_sortCol==='seq')     { va=String(a.seq).padStart(6,'0'); vb=String(b.seq).padStart(6,'0'); }
-    if (_sortCol==='date')    { va=toISO(a.date||'');         vb=toISO(b.date||''); }
-    if (_sortCol==='time')    { va=a.timeRaw||'00:00';        vb=b.timeRaw||'00:00'; }
-    if (_sortCol==='package') { va=pkgOrder(a.package||'');   vb=pkgOrder(b.package||''); }
-    if (_sortCol==='branch')  { va=a.branch||'';              vb=b.branch||''; }
-    if (_sortCol==='barber')  { va=a.barber||'';              vb=b.barber||''; }
+    if (_sortCol==='time')    { va=a.timeRaw||'00:00';            vb=b.timeRaw||'00:00'; }
+    if (_sortCol==='package') { va=pkgOrder(a.package||'');       vb=pkgOrder(b.package||''); }
+    if (_sortCol==='branch')  { va=a.branch||'';                  vb=b.branch||''; }
+    if (_sortCol==='barber')  { va=a.barber||'';                  vb=b.barber||''; }
     if (va < vb) return _sortDir==='asc' ? -1 : 1;
     if (va > vb) return _sortDir==='asc' ?  1 : -1;
-    // Tiebreaker: always date then time
-    const da=toISO(a.date||''), db=toISO(b.date||'');
-    if (da!==db) return da<db?-1:1;
+    // Final tiebreaker: time
     const ta=a.timeRaw||'00:00', tb=b.timeRaw||'00:00';
     return ta<tb?-1:ta>tb?1:0;
   });
