@@ -1102,6 +1102,30 @@ thead th.sort-asc,thead th.sort-desc{color:var(--gold-light)}
   </div>
 </div>
 
+<!-- Booking preview modal -->
+<div class="modal-backdrop" id="bookingPreviewModal">
+  <div class="modal" style="max-width:440px;border-color:var(--border-gold)">
+    <h3 style="color:var(--gold-light)">📋 تأكيد بيانات الحجز</h3>
+    <p style="color:var(--text-muted);font-size:.85rem;margin-bottom:1rem">الوقت الجديد المقترح. تحقق من البيانات قبل التأكيد:</p>
+    <div style="background:#0d0d0d;border:1px solid var(--border);padding:1.1rem;margin-bottom:1.25rem">
+      <div class="confirm-row"><span class="confirm-key">الاسم</span><span class="confirm-val" id="previewName"></span></div>
+      <div class="confirm-row"><span class="confirm-key">الجوال</span><span class="confirm-val" id="previewPhone" dir="ltr" style="text-align:left"></span></div>
+      <div class="confirm-row"><span class="confirm-key">التاريخ</span><span class="confirm-val" id="previewDate"></span></div>
+      <div class="confirm-row" style="background:rgba(201,168,76,.08);margin:0 -.5rem;padding:.4rem .5rem;border-right:3px solid var(--gold)">
+        <span class="confirm-key">الوقت الجديد</span>
+        <span class="confirm-val" id="previewTime" style="color:var(--gold-light);font-size:1rem"></span>
+      </div>
+      <div class="confirm-row"><span class="confirm-key">الفرع</span><span class="confirm-val" id="previewBranch"></span></div>
+      <div class="confirm-row"><span class="confirm-key">الحلاق</span><span class="confirm-val" id="previewBarber"></span></div>
+      <div class="confirm-row"><span class="confirm-key">الباقة</span><span class="confirm-val" id="previewPackage"></span></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeBookingPreview()">← تغيير الوقت</button>
+      <button class="btn-modal-save" onclick="confirmBookingPreview()">✅ تأكيد الحجز</button>
+    </div>
+  </div>
+</div>
+
 <!-- Booking suggestions modal -->
 <div class="modal-backdrop" id="suggestModal">
   <div class="modal" style="max-width:440px">
@@ -1315,6 +1339,13 @@ function setupUI(isSuper, displayName, perms) {
 
   document.getElementById('fDate').value = todayISO();
   updateSeq();
+  // Show working hours section for super admins
+  if (isSuper) {
+    const whSec = document.getElementById('workingHoursSection');
+    if (whSec) whSec.style.display = 'block';
+    // Small delay to ensure barbers are loaded before rendering the grid
+    setTimeout(() => populateWorkingHoursUI(), 200);
+  }
 }
 
 /* ═══════════════════════════════════════════════
@@ -2489,6 +2520,9 @@ function onBookingBranchChange() {
   updateBookingTimeConstraints();
 }
 
+// Pending booking preview (after suggestion pick)
+let _bookingPreview = null;
+
 // Get free time suggestions (2 before, 2 after), step = 30 min
 function getSuggestions(barber, date, timeRaw, branch) {
   const base = timeToMins(timeRaw);
@@ -2608,10 +2642,46 @@ function closeSuggest() {
 }
 
 function pickSuggestion(hhmm) {
+  // Update the time field
   document.getElementById('bTime').value = hhmm;
   document.getElementById('bTime').classList.remove('b-invalid');
   closeSuggest();
-  submitBooking(); // re-validate with new time
+
+  // Build preview data from form
+  const name    = document.getElementById('bName').value.trim();
+  const phone   = document.getElementById('bPhone').value.trim();
+  const date    = document.getElementById('bDate').value;
+  const branch  = document.getElementById('bBranch').value;
+  const barber  = document.getElementById('bBarber').value;
+  const pkg     = document.getElementById('bPackage').value;
+  const dateFmt = fmtDate(date);
+  const branchLabel = BRANCH_LABELS[branch] || branch;
+  const TEXT_PKGS = ['شعر','دقن','شعر + دقن'];
+  const pkgLabel = TEXT_PKGS.includes(pkg) ? pkg : 'الباقة ' + pkg;
+
+  _bookingPreview = {name, phone, dateFmt, hhmm, pkg, branch, branchLabel, barber};
+
+  // Show preview modal
+  document.getElementById('previewName').textContent    = name;
+  document.getElementById('previewPhone').textContent   = phone;
+  document.getElementById('previewDate').textContent    = dateFmt;
+  document.getElementById('previewTime').textContent    = to12h(hhmm);
+  document.getElementById('previewBranch').textContent  = branchLabel;
+  document.getElementById('previewBarber').textContent  = barber;
+  document.getElementById('previewPackage').textContent = pkgLabel;
+  document.getElementById('bookingPreviewModal').classList.add('show');
+}
+
+function closeBookingPreview() {
+  document.getElementById('bookingPreviewModal').classList.remove('show');
+  _bookingPreview = null;
+}
+
+async function confirmBookingPreview() {
+  if (!_bookingPreview) return;
+  const {name, phone, dateFmt, hhmm, pkg, branch, branchLabel, barber} = _bookingPreview;
+  closeBookingPreview();
+  await saveBookingEntry(name, phone, dateFmt, hhmm, pkg, branch, branchLabel, barber);
 }
 
 async function saveBookingEntry(name, phone, dateFmt, timeRaw, pkg, branch, branchLabel, barber) {
@@ -2619,11 +2689,19 @@ async function saveBookingEntry(name, phone, dateFmt, timeRaw, pkg, branch, bran
   btn.disabled = true; btn.textContent = 'جاري الحجز...';
 
   try {
+    // CRITICAL: always fetch latest data from Firebase before writing
+    // to avoid overwriting existing records when no admin session is active
+    const latest = await fsGet('customers');
+    if (latest) {
+      customers = latest.list || [];
+      nextSeq   = latest.nextSeq || 1;
+    }
+
     const entry = {
       seq: nextSeq, name, phone,
       date: dateFmt, timeRaw, time: to12h(timeRaw),
       package: pkg, branchKey: branch, branch: branchLabel, barber,
-      source: 'customer',   // mark as customer booking
+      source: 'customer',
       bookedAt: new Date().toISOString()
     };
     customers.push(entry);
@@ -2631,6 +2709,7 @@ async function saveBookingEntry(name, phone, dateFmt, timeRaw, pkg, branch, bran
     await persist();
     showBookingConfirmation(entry);
   } catch(e) {
+    console.error('Booking error:', e);
     const errEl = document.getElementById('bErr');
     errEl.textContent = '❌ حدث خطأ أثناء الحجز. يرجى المحاولة مرة أخرى.';
     errEl.classList.add('show');
@@ -2700,6 +2779,8 @@ document.addEventListener('DOMContentLoaded', () => {
 document.addEventListener('DOMContentLoaded', () => {
   const sm = document.getElementById('suggestModal');
   if (sm) sm.addEventListener('click', e => { if (e.target === e.currentTarget) closeSuggest(); });
+  const pm = document.getElementById('bookingPreviewModal');
+  if (pm) pm.addEventListener('click', e => { if (e.target === e.currentTarget) closeBookingPreview(); });
 });
 
 /* ═══════════════════════════════════════════════
