@@ -527,20 +527,32 @@ thead th.sort-asc,thead th.sort-desc{color:var(--gold-light)}
   <div style="position:absolute;inset:0;overflow:hidden;pointer-events:none">
     <div class="deco-line"></div><div class="deco-line"></div>
   </div>
-  <!-- CUSTOMER BOOKING FORM — top of page -->
-  <div class="booking-section" id="bookingSection" style="margin-top:0;padding-top:2rem">
-    <div style="text-align:center;margin-bottom:1.5rem">
-      <svg style="display:block;margin:0 auto .75rem" width="44" height="118" viewBox="0 0 60 160" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <rect x="22" y="0" width="16" height="8" rx="2" fill="#c9a84c"/>
-        <rect x="22" y="152" width="16" height="8" rx="2" fill="#c9a84c"/>
-        <rect x="24" y="8" width="12" height="144" fill="#1a1a1a" stroke="#2a2a2a" stroke-width="1"/>
-        <path d="M24 8 Q30 28 36 48 Q42 68 36 88 Q30 108 24 128 Q18 148 24 152" stroke="white" stroke-width="3.5" fill="none" stroke-linecap="round"/>
-        <path d="M36 8 Q42 28 36 48 Q30 68 24 88 Q18 108 24 128 Q30 148 36 152" stroke="#c0392b" stroke-width="3.5" fill="none" stroke-linecap="round"/>
-        <path d="M30 8 Q36 28 30 48 Q24 68 30 88 Q36 108 30 128 Q24 148 30 152" stroke="#c9a84c" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.7"/>
-      </svg>
-      <h1 class="brand-ar" style="font-size:clamp(1.8rem,6vw,3.5rem)">حلاق حان الوعد</h1>
-      <p class="brand-sub" style="margin-bottom:0">صالون الحلاقة المتميز — الأناقة بمعاييرها الحقيقية</p>
+  <!-- PERMANENT LANDING HEADER — always visible regardless of booking toggle -->
+  <div class="landing-content" id="landingHeader">
+    <svg style="display:block;margin:0 auto 1.5rem" width="60" height="160" viewBox="0 0 60 160" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="22" y="0" width="16" height="8" rx="2" fill="#c9a84c"/>
+      <rect x="22" y="152" width="16" height="8" rx="2" fill="#c9a84c"/>
+      <rect x="24" y="8" width="12" height="144" fill="#1a1a1a" stroke="#2a2a2a" stroke-width="1"/>
+      <path d="M24 8 Q30 28 36 48 Q42 68 36 88 Q30 108 24 128 Q18 148 24 152" stroke="white" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+      <path d="M36 8 Q42 28 36 48 Q30 68 24 88 Q18 108 24 128 Q30 148 36 152" stroke="#c0392b" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+      <path d="M30 8 Q36 28 30 48 Q24 68 30 88 Q36 108 30 128 Q24 148 30 152" stroke="#c9a84c" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.7"/>
+    </svg>
+    <h1 class="brand-ar">حلاق حان الوعد</h1>
+    <p class="brand-sub">صالون الحلاقة المتميز &mdash; الأناقة بمعاييرها الحقيقية</p>
+    <div class="divider"><div class="divider-line"></div><div class="divider-diamond"></div><div class="divider-line"></div></div>
+    <!-- Admin button — always visible -->
+    <button class="btn-admin" onclick="showScreen('login')">🔑&nbsp; دخول لوحة الإدارة</button>
+    <div class="services-strip">
+      <div class="service-item"><div class="service-icon">✂️</div><div class="service-label">قص الشعر</div></div>
+      <div class="service-item"><div class="service-icon">🪒</div><div class="service-label">حلاقة الذقن</div></div>
+      <div class="service-item"><div class="service-icon">💈</div><div class="service-label">الباقات المميزة</div></div>
+      <div class="service-item"><div class="service-icon">👑</div><div class="service-label">العناية الفاخرة</div></div>
     </div>
+  </div>
+
+  <!-- CUSTOMER BOOKING FORM — only this section is hidden when booking is disabled -->
+  <div class="booking-section" id="bookingSection">
+    <div class="divider" style="max-width:400px;margin:0 auto 1.5rem"><div class="divider-line"></div><div class="divider-diamond"></div><div class="divider-line"></div></div>
     <h2>احجز موعدك الآن</h2>
     <p class="booking-sub">أدخل بياناتك واختر الوقت المناسب</p>
     <div class="booking-card">
@@ -594,13 +606,9 @@ thead th.sort-asc,thead th.sort-desc{color:var(--gold-light)}
       <div class="alert-box alert-error" id="bErr" style="margin-top:1rem"></div>
       <button class="btn-book" id="bBtn" onclick="submitBooking()">📅&nbsp; تأكيد الحجز</button>
     </div>
-    <div style="text-align:center;margin-top:2rem;padding-bottom:2rem;border-top:1px solid var(--border);padding-top:1.5rem">
-      <p style="font-size:.8rem;color:var(--text-muted);margin-bottom:.85rem">هل أنت من الإدارة؟</p>
-      <button class="btn-admin" onclick="showScreen('login')" style="font-size:.85rem;padding:.65rem 1.8rem">🔑&nbsp; دخول لوحة الإدارة</button>
-    </div>
   </div>
 
-  <!-- BOOKING CONFIRMATION -->
+  <!-- BOOKING CONFIRMATION — also only shown when booking enabled -->
   <div id="bookingConfirm" style="display:none;padding:3rem 1rem">
     <div class="confirm-box">
       <div class="confirm-icon">✅</div>
@@ -2947,15 +2955,23 @@ async function loadSiteSettings() {
 }
 
 function applyCustomerBookingVisibility() {
+  // Only hide/show the FORM and CONFIRMATION — NEVER the landing header or admin button
   const section = document.getElementById('bookingSection');
   const confirm = document.getElementById('bookingConfirm');
   if (section) section.style.display = _customerBookingEnabled ? 'block' : 'none';
-  if (confirm && !_customerBookingEnabled) confirm.style.display = 'none';
-  // Update toggle checkbox if in control panel
-  const cb = document.getElementById('cbCustomerBooking');
+  if (confirm) {
+    // Only show confirmation if booking is enabled AND was just completed
+    if (!_customerBookingEnabled) confirm.style.display = 'none';
+    // (if enabled, confirmation visibility is managed by showBookingConfirmation/resetBookingForm)
+  }
+  // Update toggle checkbox state in control panel
+  const cb  = document.getElementById('cbCustomerBooking');
   const lbl = document.getElementById('cbLabel');
-  if (cb) cb.checked = _customerBookingEnabled;
-  if (lbl) { lbl.textContent = _customerBookingEnabled ? 'مفعّل' : 'معطّل'; lbl.style.color = _customerBookingEnabled ? 'var(--green)' : 'var(--text-muted)'; }
+  if (cb)  cb.checked = _customerBookingEnabled;
+  if (lbl) {
+    lbl.textContent  = _customerBookingEnabled ? 'مفعّل' : 'معطّل';
+    lbl.style.color  = _customerBookingEnabled ? 'var(--green)' : 'var(--text-muted)';
+  }
 }
 
 async function toggleCustomerBooking(enabled) {
