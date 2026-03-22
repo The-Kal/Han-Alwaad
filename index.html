@@ -892,7 +892,7 @@ thead th.sort-asc,thead th.sort-desc{color:var(--gold-light)}
       <div id="workingHoursSection" style="display:none">
         <div class="section-header" style="margin-bottom:1rem">
           <div class="sh-icon">🕐</div>
-          <div><h2>ساعات العمل</h2><p>تحديد أوقات العمل للفروع والحلاقين — تؤثر على نموذج حجز العملاء</p></div>
+          <div><h2>ساعات العمل</h2><p>تحديد أوقات العمل للفروع والحلاقين</p><p style="margin-top:.3rem;font-size:.8rem;font-weight:700;color:var(--orange);background:rgba(230,126,34,.1);border:1px solid rgba(230,126,34,.3);padding:.3rem .65rem;display:inline-block">⚠️ تؤثر مباشرةً على نموذج حجز العملاء في الصفحة الرئيسية</p></div>
         </div>
         <div class="alert-box alert-success" id="whOk"></div>
 
@@ -924,6 +924,10 @@ thead th.sort-asc,thead th.sort-desc{color:var(--gold-light)}
                   </div>
                 </div>
                 <div class="wh-custom" id="whc_branch1"></div>
+                <button class="btn-wh-clear" style="margin-top:.85rem;color:var(--gold);border-color:var(--border-gold);font-size:.8rem"
+                  onclick="applyBranchHoursToBarbers('branch1')">
+                  📋 تطبيق أوقات الفرع على جميع حلاقيه
+                </button>
               </div>
             </div>
             <!-- branch2 -->
@@ -950,6 +954,10 @@ thead th.sort-asc,thead th.sort-desc{color:var(--gold-light)}
                   </div>
                 </div>
                 <div class="wh-custom" id="whc_branch2"></div>
+                <button class="btn-wh-clear" style="margin-top:.85rem;color:var(--gold);border-color:var(--border-gold);font-size:.8rem"
+                  onclick="applyBranchHoursToBarbers('branch2')">
+                  📋 تطبيق أوقات الفرع على جميع حلاقيه
+                </button>
               </div>
             </div>
           </div>
@@ -2499,26 +2507,97 @@ function toggleDayOff(entityKey, idx) {
 /* ── Set mode (daily / custom) for branch or barber ── */
 function setWHMode(type, key, mode) {
   const entityKey = type + '_' + key;
-  const dailyDiv  = document.getElementById('whd_'  + (type==='branch' ? key : 'barber_'+key.replace(/\s+/g,'_')));
-  const customDiv = document.getElementById('whc_'  + (type==='branch' ? key : 'barber_'+key.replace(/\s+/g,'_')));
-  const rdDaily   = document.getElementById('whr_'  + (type==='branch' ? key : key.replace(/\s+/g,'_')) + '_daily');
-  const rdCustom  = document.getElementById('whr_'  + (type==='branch' ? key : key.replace(/\s+/g,'_')) + '_custom');
+  const safeKey   = key.replace(/\s+/g,'_');
+
+  // IDs used in branch HTML: whr_b1_daily, whr_b1_custom
+  // IDs used in barber HTML: whr_{safeKey}_daily, whr_{safeKey}_custom
+  let rdDailyId, rdCustomId, dailyDivId, customDivId;
+  if (type === 'branch') {
+    const short = key === 'branch1' ? 'b1' : 'b2';
+    rdDailyId   = 'whr_' + short + '_daily';
+    rdCustomId  = 'whr_' + short + '_custom';
+    dailyDivId  = 'whd_' + key;
+    customDivId = 'whc_' + key;
+  } else {
+    rdDailyId   = 'whr_' + safeKey + '_daily';
+    rdCustomId  = 'whr_' + safeKey + '_custom';
+    dailyDivId  = 'whd_barber_' + safeKey;
+    customDivId = 'whc_barber_' + safeKey;
+  }
+
+  const dailyDiv  = document.getElementById(dailyDivId);
+  const customDiv = document.getElementById(customDivId);
+  const rdDaily   = document.getElementById(rdDailyId);
+  const rdCustom  = document.getElementById(rdCustomId);
 
   if (!dailyDiv || !customDiv) return;
+
+  // Update actual radio input checked state
+  if (rdDaily)  { const r = rdDaily.querySelector('input[type=radio]');  if (r) r.checked = mode === 'daily';  }
+  if (rdCustom) { const r = rdCustom.querySelector('input[type=radio]'); if (r) r.checked = mode === 'custom'; }
+
   if (mode === 'daily') {
-    dailyDiv.style.display  = 'block';
+    dailyDiv.style.display = 'block';
     customDiv.classList.remove('visible');
-    if (rdDaily)  rdDaily.classList.add('selected');
-    if (rdCustom) rdCustom.classList.remove('selected');
+    rdDaily?.classList.add('selected');
+    rdCustom?.classList.remove('selected');
   } else {
-    dailyDiv.style.display  = 'none';
+    dailyDiv.style.display = 'none';
     customDiv.classList.add('visible');
     if (customDiv.innerHTML.trim() === '') {
       customDiv.innerHTML = renderCustomDays(entityKey);
     }
-    if (rdCustom) rdCustom.classList.add('selected');
-    if (rdDaily)  rdDaily.classList.remove('selected');
+    rdCustom?.classList.add('selected');
+    rdDaily?.classList.remove('selected');
   }
+}
+
+/* ── Apply branch hours to all its barbers ── */
+function applyBranchHoursToBarbers(branch) {
+  const branchBarbers = barbers[branch] || [];
+  if (!branchBarbers.length) { showToast('⚠️ لا يوجد حلاقون في هذا الفرع','var(--red)'); return; }
+
+  const mode = document.querySelector(`input[name="wh_${branch}_mode"]:checked`)?.value || 'daily';
+
+  branchBarbers.forEach(name => {
+    const safeKey = name.replace(/\s+/g,'_');
+    if (mode === 'daily') {
+      const open  = document.getElementById(`wh_${branch==='branch1'?'b1':'b2'}_open`)?.value  || '';
+      const close = document.getElementById(`wh_${branch==='branch1'?'b1':'b2'}_close`)?.value || '';
+      // Update the stored data
+      workingHours.barbers = workingHours.barbers || {};
+      workingHours.barbers[name] = { open, close, mode: 'daily' };
+      // Update DOM if already rendered
+      const od = document.getElementById(`wh_barber_${safeKey}_open`);
+      const cd = document.getElementById(`wh_barber_${safeKey}_close`);
+      if (od) od.value = open;
+      if (cd) cd.value = close;
+      // Reset to daily mode
+      setWHMode('barber', name, 'daily');
+      const rd = document.getElementById(`whr_${safeKey}_daily`);
+      const rc = document.getElementById(`whr_${safeKey}_custom`);
+      if (rd) { rd.classList.add('selected'); const r=rd.querySelector('input[type=radio]'); if(r) r.checked=true; }
+      if (rc) { rc.classList.remove('selected'); const r=rc.querySelector('input[type=radio]'); if(r) r.checked=false; }
+    } else {
+      // Copy custom schedule
+      const srcKey = 'branch_' + branch;
+      const customData = {};
+      DAY_NAMES.forEach((_, i) => {
+        const o   = document.getElementById(`whd_${srcKey}_${i}_o`);
+        const cl  = document.getElementById(`whd_${srcKey}_${i}_c`);
+        const off = document.getElementById(`whd_${srcKey}_${i}_off`);
+        if (o) customData[i] = { open: o.value, close: cl?.value||'', off: off?.checked||false };
+      });
+      workingHours._custom = workingHours._custom || {};
+      workingHours._custom[`barber_${name}`] = customData;
+      workingHours.barbers = workingHours.barbers || {};
+      workingHours.barbers[name] = { open:'', close:'', mode:'custom' };
+    }
+  });
+
+  // Re-render barber grid to reflect changes
+  renderBarberHoursGrid();
+  showToast(`✅ تم تطبيق أوقات الفرع على ${branchBarbers.length} حلاق`);
 }
 
 /* ── Clear all hours for an entity ── */
