@@ -894,6 +894,21 @@ thead th.sort-asc,thead th.sort-desc{color:var(--gold-light)}
           <div class="sh-icon">🕐</div>
           <div><h2>ساعات العمل</h2><p>تحديد أوقات العمل للفروع والحلاقين</p><p style="margin-top:.3rem;font-size:.8rem;font-weight:700;color:var(--orange);background:rgba(230,126,34,.1);border:1px solid rgba(230,126,34,.3);padding:.3rem .65rem;display:inline-block">⚠️ تؤثر مباشرةً على نموذج حجز العملاء في الصفحة الرئيسية</p></div>
         </div>
+        <!-- Customer booking toggle -->
+        <div class="settings-card" style="margin-bottom:1.5rem;max-width:520px">
+          <h3 style="color:var(--gold-light);font-size:1rem;margin-bottom:1rem;padding-bottom:.75rem;border-bottom:1px solid var(--border)">🌐 حجز العملاء الذاتي</h3>
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem">
+            <div>
+              <p style="font-size:.88rem;color:var(--text-secondary);margin-bottom:.25rem">السماح للعملاء بحجز المواعيد من الصفحة الرئيسية</p>
+              <p style="font-size:.75rem;color:var(--text-muted)">عند التعطيل تختفي نموذج الحجز من الصفحة الرئيسية</p>
+            </div>
+            <label style="display:flex;align-items:center;gap:.6rem;cursor:pointer;flex-shrink:0">
+              <input type="checkbox" id="cbCustomerBooking" onchange="toggleCustomerBooking(this.checked)"
+                style="accent-color:var(--gold);width:18px;height:18px;cursor:pointer"/>
+              <span id="cbLabel" style="font-size:.88rem;font-weight:600;color:var(--text-muted)">معطّل</span>
+            </label>
+          </div>
+        </div>
         <div class="alert-box alert-success" id="whOk"></div>
 
         <!-- Branch hours — each branch in its own card -->
@@ -2448,9 +2463,10 @@ _loginBtn.textContent = 'جاري التحميل...';
   try { const bd=document.getElementById('bDate'); if(bd) bd.value=todayISO(); } catch(e){}
   if (isLocked()) { showScreen('login'); startLockUI(); return; }
 
-  // Load barbers and working hours so booking form works even before login
+  // Load barbers, working hours and site settings so booking form works even before login
   try { await loadBarbers(); } catch(e){}
   try { await loadWorkingHours(); } catch(e){}
+  try { await loadSiteSettings(); } catch(e){}
 
   // Restore session
   const sess = getSession();
@@ -2664,7 +2680,12 @@ async function saveWorkingHours() {
     close: b1mode==='daily' ? (document.getElementById('wh_b1_close')?.value||'') : '',
     mode:  b1mode
   };
-  if (b1mode==='custom') workingHours._custom['branch_branch1'] = collectCustomDays('branch_branch1');
+  if (b1mode==='custom') {
+    const cd1 = collectCustomDays('branch_branch1');
+    const hasData1 = Object.values(cd1).some(d => d.open || d.close || d.off);
+    if (hasData1) workingHours._custom['branch_branch1'] = cd1;
+    else { workingHours.branches.branch1 = {open:'',close:'',mode:'daily'}; delete workingHours._custom['branch_branch1']; }
+  }
 
   // Branch 2
   const b2mode = document.querySelector('input[name="wh_branch2_mode"]:checked')?.value || 'daily';
@@ -2673,7 +2694,12 @@ async function saveWorkingHours() {
     close: b2mode==='daily' ? (document.getElementById('wh_b2_close')?.value||'') : '',
     mode:  b2mode
   };
-  if (b2mode==='custom') workingHours._custom['branch_branch2'] = collectCustomDays('branch_branch2');
+  if (b2mode==='custom') {
+    const cd2 = collectCustomDays('branch_branch2');
+    const hasData2 = Object.values(cd2).some(d => d.open || d.close || d.off);
+    if (hasData2) workingHours._custom['branch_branch2'] = cd2;
+    else { workingHours.branches.branch2 = {open:'',close:'',mode:'daily'}; delete workingHours._custom['branch_branch2']; }
+  }
 
   // Barbers
   const allBarbers = [...(barbers.branch1||[]), ...(barbers.branch2||[])];
@@ -2685,7 +2711,17 @@ async function saveWorkingHours() {
       close: mode==='daily' ? (document.getElementById(`wh_barber_${safeKey}_close`)?.value||'') : '',
       mode
     };
-    if (mode==='custom') workingHours._custom[`barber_${name}`] = collectCustomDays(`barber_${name}`);
+    if (mode==='custom') {
+      const customDays = collectCustomDays(`barber_${name}`);
+      const hasData = Object.values(customDays).some(d => d.open || d.close || d.off);
+      if (hasData) {
+        workingHours._custom[`barber_${name}`] = customDays;
+      } else {
+        // No custom data entered — reset to daily to avoid false CLOSED
+        workingHours.barbers[name] = {open:'', close:'', mode:'daily'};
+        delete (workingHours._custom||{})[`barber_${name}`];
+      }
+    }
   });
 
   try {
@@ -2763,6 +2799,8 @@ function renderBarberHoursGrid() {
 
 /* ── Populate entire working hours UI from stored data ── */
 function populateWorkingHoursUI() {
+  // Init customer booking toggle
+  applyCustomerBookingVisibility();
   const b1o = document.getElementById('wh_b1_open');
   if (!b1o) return;
 
@@ -2802,32 +2840,54 @@ function getDayIdx(dateStr) {
   return new Date(y, m-1, d).getDay();
 }
 
-// Resolve hours for an entity (branch or barber) considering mode + day
+// Resolve hours for a single entity (branch or barber)
+// Returns: null = no restriction set, 'CLOSED' = day off, {open,close} = hours
 function resolveEntityHours(entityData, entityKey, dateStr) {
-  if (!entityData) return {open:'',close:''};
+  if (!entityData) return null; // no data = no restriction
+
   const mode = entityData.mode || 'daily';
-  if (mode === 'daily') return {open: entityData.open||'', close: entityData.close||''};
-  // Custom: look up the day
+
+  if (mode === 'daily') {
+    const open  = entityData.open  || '';
+    const close = entityData.close || '';
+    // No hours entered = no restriction for this entity
+    if (!open && !close) return null;
+    return {open, close};
+  }
+
+  // Custom mode: look up the specific day
   const dayIdx = getDayIdx(dateStr);
-  const custom = workingHours._custom?.[entityKey]?.[dayIdx] || workingHours._custom?.[entityKey]?.[String(dayIdx)];
-  if (!custom || custom.off) return {open:'CLOSED',close:'CLOSED'}; // day off
-  return {open: custom.open||'', close: custom.close||''};
+  const customMap = workingHours._custom?.[entityKey] || {};
+  // Firebase stores numeric keys as strings — check both
+  const custom = customMap[dayIdx] ?? customMap[String(dayIdx)];
+
+  if (!custom) return null; // day not configured = no restriction for this entity
+  if (custom.off) return 'CLOSED'; // explicitly marked as day off
+
+  const open  = custom.open  || '';
+  const close = custom.close || '';
+  if (!open && !close) return null; // day configured but times left empty = no restriction
+  return {open, close};
 }
 
-// Get effective working hours for a barber+branch (most restrictive wins)
+// Get effective working hours combining branch + barber (most restrictive wins)
 function getEffectiveHours(branch, barberName, dateStr) {
-  const bData = workingHours.branches?.[branch];
-  const aData = workingHours.barbers?.[barberName];
-  const bh = resolveEntityHours(bData, 'branch_'+branch, dateStr);
-  const ah = resolveEntityHours(aData, 'barber_'+barberName, dateStr);
+  const bh = resolveEntityHours(workingHours.branches?.[branch],   'branch_'+branch,      dateStr);
+  const ah = resolveEntityHours(workingHours.barbers?.[barberName], 'barber_'+barberName, dateStr);
 
-  // If either is CLOSED (day off), treat as closed
-  if (bh.open==='CLOSED' || ah.open==='CLOSED') return {open:'CLOSED',close:'CLOSED'};
+  // If explicitly closed (day off), closed wins
+  if (bh === 'CLOSED' || ah === 'CLOSED') return {open:'CLOSED', close:'CLOSED'};
 
-  let open  = bh.open  || ah.open  || '';
-  let close = bh.close || ah.close || '';
-  if (bh.open  && ah.open)  open  = bh.open  > ah.open  ? bh.open  : ah.open;
-  if (bh.close && ah.close) close = bh.close < ah.close ? bh.close : ah.close;
+  // Both null = no restriction at all
+  if (!bh && !ah) return {open:'', close:''};
+
+  // One set, one not = use the one that's set
+  if (!bh) return ah;
+  if (!ah) return bh;
+
+  // Both set = most restrictive (later open, earlier close)
+  const open  = bh.open  && ah.open  ? (bh.open  > ah.open  ? bh.open  : ah.open)  : (bh.open  || ah.open  || '');
+  const close = bh.close && ah.close ? (bh.close < ah.close ? bh.close : ah.close) : (bh.close || ah.close || '');
   return {open, close};
 }
 
@@ -2852,6 +2912,45 @@ function isWithinWorkingHours(branch, barberName, hhmm, dateStr) {
   if (open  && hhmm < open)  return false;
   if (close && hhmm > close) return false;
   return true;
+}
+
+
+/* ═══════════════════════════════════════════════
+   CUSTOMER BOOKING TOGGLE
+═══════════════════════════════════════════════ */
+let _customerBookingEnabled = true; // default: enabled
+
+async function loadSiteSettings() {
+  try {
+    const d = await fsGet('siteSettings');
+    if (d && typeof d.customerBookingEnabled === 'boolean') {
+      _customerBookingEnabled = d.customerBookingEnabled;
+    }
+  } catch(e) {}
+  applyCustomerBookingVisibility();
+}
+
+function applyCustomerBookingVisibility() {
+  const section = document.getElementById('bookingSection');
+  const confirm = document.getElementById('bookingConfirm');
+  if (section) section.style.display = _customerBookingEnabled ? 'block' : 'none';
+  if (confirm && !_customerBookingEnabled) confirm.style.display = 'none';
+  // Update toggle checkbox if in control panel
+  const cb = document.getElementById('cbCustomerBooking');
+  const lbl = document.getElementById('cbLabel');
+  if (cb) cb.checked = _customerBookingEnabled;
+  if (lbl) { lbl.textContent = _customerBookingEnabled ? 'مفعّل' : 'معطّل'; lbl.style.color = _customerBookingEnabled ? 'var(--green)' : 'var(--text-muted)'; }
+}
+
+async function toggleCustomerBooking(enabled) {
+  _customerBookingEnabled = enabled;
+  applyCustomerBookingVisibility();
+  try {
+    await fsSet('siteSettings', { customerBookingEnabled: enabled });
+    showToast(enabled ? '✅ تم تفعيل حجز العملاء' : '✅ تم تعطيل حجز العملاء');
+  } catch(e) {
+    showToast('❌ خطأ في الحفظ','var(--red)');
+  }
 }
 
 /* ═══════════════════════════════════════════════
