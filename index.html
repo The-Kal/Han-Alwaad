@@ -1799,6 +1799,18 @@ async function saveEntry() {
   if(phone.length>0&&phone.length<7) showPhHint('رقم الجوال قصير جداً',true);
   if(!ok){showToast('⚠️ يرجى تعبئة جميع الحقول','var(--red)');return;}
   const dateFmt=fmtDate(date), branchLabel=BRANCH_LABELS[branch]||branch;
+  // Ensure working hours are current
+  try { await loadWorkingHours(); } catch(e) {}
+  // Working hours check for admin form
+  if (!isWithinWorkingHours(branch, barber, time, dateFmt)) {
+    const {open, close} = getEffectiveHours(branch, barber, dateFmt);
+    const whMsg = (open==='CLOSED')
+      ? '⚠️ هذا اليوم إجازة للحلاق أو الفرع. لا يمكن الحجز.'
+      : `⚠️ الوقت خارج ساعات العمل. ساعات العمل: ${open?to12h(open):'—'} — ${close?to12h(close):'—'}`;
+    showToast(whMsg, 'var(--orange)');
+    document.getElementById('fTime').classList.add('invalid');
+    return;
+  }
   const sess_e=getSession();
   const entry={seq:nextSeq,name,phone,date:dateFmt,timeRaw:time,time:to12h(time),package:pkg,branchKey:branch,branch:branchLabel,barber,bookedBy:sess_e?.displayName||sess_e?.username||'admin',source:'admin'};
   const conflict=findConflict(barber,dateFmt,time);
@@ -2797,7 +2809,7 @@ function resolveEntityHours(entityData, entityKey, dateStr) {
   if (mode === 'daily') return {open: entityData.open||'', close: entityData.close||''};
   // Custom: look up the day
   const dayIdx = getDayIdx(dateStr);
-  const custom = workingHours._custom?.[entityKey]?.[dayIdx];
+  const custom = workingHours._custom?.[entityKey]?.[dayIdx] || workingHours._custom?.[entityKey]?.[String(dayIdx)];
   if (!custom || custom.off) return {open:'CLOSED',close:'CLOSED'}; // day off
   return {open: custom.open||'', close: custom.close||''};
 }
@@ -2945,12 +2957,21 @@ async function submitBooking() {
   const dateFmt    = fmtDate(date);
   const branchLabel = BRANCH_LABELS[branch] || branch;
 
+  // Re-fetch working hours to ensure fresh data (user may not be logged in)
+  try { await loadWorkingHours(); } catch(e) {}
+
   // Check working hours
   if (!isWithinWorkingHours(branch, barber, timeRaw, dateFmt)) {
     const {open, close} = getEffectiveHours(branch, barber, dateFmt);
-    const errEl = document.getElementById('bErr');
-    errEl.textContent = `⚠️ الوقت المختار خارج ساعات العمل. ساعات العمل: ${to12h(open)} — ${to12h(close)}`;
-    errEl.classList.add('show');
+    const errEl2 = document.getElementById('bErr');
+    if (open === 'CLOSED') {
+      errEl2.textContent = '⚠️ هذا اليوم إجازة. لا يمكن الحجز في هذا اليوم.';
+    } else {
+      const openLabel  = open  ? to12h(open)  : '—';
+      const closeLabel = close ? to12h(close) : '—';
+      errEl2.textContent = `⚠️ الوقت المختار خارج ساعات العمل. ساعات العمل: ${openLabel} — ${closeLabel}`;
+    }
+    errEl2.classList.add('show');
     return;
   }
 
