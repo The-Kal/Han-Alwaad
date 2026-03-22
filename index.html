@@ -527,6 +527,7 @@ thead th.sort-asc,thead th.sort-desc{color:var(--gold-light)}
   <div style="position:absolute;inset:0;overflow:hidden;pointer-events:none">
     <div class="deco-line"></div><div class="deco-line"></div>
   </div>
+
   <!-- PERMANENT LANDING HEADER — always visible regardless of booking toggle -->
   <div class="landing-content" id="landingHeader">
     <svg style="display:block;margin:0 auto 1.5rem" width="60" height="160" viewBox="0 0 60 160" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -550,8 +551,9 @@ thead th.sort-asc,thead th.sort-desc{color:var(--gold-light)}
     </div>
   </div>
 
-  <!-- CUSTOMER BOOKING FORM — only this section is hidden when booking is disabled -->
-  <div class="booking-section" id="bookingSection">
+  <!-- CUSTOMER BOOKING FORM — hidden by default, shown by JS only if enabled -->
+  <!-- style="display:none" prevents flash before JS loads -->
+  <div class="booking-section" id="bookingSection" style="display:none">
     <div class="divider" style="max-width:400px;margin:0 auto 1.5rem"><div class="divider-line"></div><div class="divider-diamond"></div><div class="divider-line"></div></div>
     <h2>احجز موعدك الآن</h2>
     <p class="booking-sub">أدخل بياناتك واختر الوقت المناسب</p>
@@ -905,16 +907,23 @@ thead th.sort-asc,thead th.sort-desc{color:var(--gold-light)}
         <!-- Customer booking toggle -->
         <div class="settings-card" style="margin-bottom:1.5rem;max-width:520px">
           <h3 style="color:var(--gold-light);font-size:1rem;margin-bottom:1rem;padding-bottom:.75rem;border-bottom:1px solid var(--border)">🌐 حجز العملاء الذاتي</h3>
-          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem">
-            <div>
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:1rem">
+            <div style="flex:1">
               <p style="font-size:.88rem;color:var(--text-secondary);margin-bottom:.25rem">السماح للعملاء بحجز المواعيد من الصفحة الرئيسية</p>
-              <p style="font-size:.75rem;color:var(--text-muted)">عند التعطيل تختفي نموذج الحجز من الصفحة الرئيسية</p>
+              <p style="font-size:.75rem;color:var(--text-muted);margin-bottom:.85rem">عند التعطيل، يختفي نموذج الحجز من الصفحة الرئيسية</p>
+              <div style="display:flex;align-items:center;gap:.85rem;flex-wrap:wrap">
+                <div style="display:flex;align-items:center;gap:.5rem">
+                  <span style="font-size:.82rem;color:var(--text-muted)">الحالة:</span>
+                  <span id="cbLabel" style="font-size:.88rem;font-weight:700;color:var(--text-muted)">معطّل</span>
+                </div>
+                <button id="btnToggleBooking" onclick="openToggleBookingModal()"
+                  style="padding:.55rem 1.25rem;background:transparent;border:1px solid var(--border);color:var(--text-secondary);font-family:'Tajawal',sans-serif;font-size:.88rem;font-weight:600;cursor:pointer;transition:all .2s"
+                  onmouseover="this.style.borderColor='var(--gold)';this.style.color='var(--gold)'"
+                  onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-secondary)'">
+                  تغيير الحالة ↕
+                </button>
+              </div>
             </div>
-            <label style="display:flex;align-items:center;gap:.6rem;cursor:pointer;flex-shrink:0">
-              <input type="checkbox" id="cbCustomerBooking" onchange="toggleCustomerBooking(this.checked)"
-                style="accent-color:var(--gold);width:18px;height:18px;cursor:pointer"/>
-              <span id="cbLabel" style="font-size:.88rem;font-weight:600;color:var(--text-muted)">معطّل</span>
-            </label>
           </div>
         </div>
         <div class="alert-box alert-success" id="whOk"></div>
@@ -1215,6 +1224,18 @@ thead th.sort-asc,thead th.sort-desc{color:var(--gold-light)}
     <div class="modal-actions">
       <button class="btn-cancel" onclick="closeBookingPreview()">← تغيير الوقت</button>
       <button class="btn-modal-save" onclick="confirmBookingPreview()">✅ تأكيد الحجز</button>
+    </div>
+  </div>
+</div>
+
+<!-- Customer booking toggle confirmation modal -->
+<div class="modal-backdrop" id="toggleBookingModal">
+  <div class="modal" style="max-width:420px">
+    <h3 id="toggleBookingTitle" style="color:var(--gold-light)">تغيير حالة حجز العملاء</h3>
+    <div id="toggleBookingWarn" style="margin:1rem 0;padding:.85rem 1rem;border-radius:1px;font-size:.88rem;line-height:1.6"></div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeToggleBookingModal()">إلغاء</button>
+      <button id="btnToggleBookingConfirm" class="btn-modal-save" onclick="confirmToggleBooking()">تأكيد</button>
     </div>
   </div>
 </div>
@@ -2959,27 +2980,56 @@ function applyCustomerBookingVisibility() {
   const section = document.getElementById('bookingSection');
   const confirm = document.getElementById('bookingConfirm');
   if (section) section.style.display = _customerBookingEnabled ? 'block' : 'none';
-  if (confirm) {
-    // Only show confirmation if booking is enabled AND was just completed
-    if (!_customerBookingEnabled) confirm.style.display = 'none';
-    // (if enabled, confirmation visibility is managed by showBookingConfirmation/resetBookingForm)
-  }
-  // Update toggle checkbox state in control panel
-  const cb  = document.getElementById('cbCustomerBooking');
+  if (confirm && !_customerBookingEnabled) confirm.style.display = 'none';
+  // Update status label in control panel
   const lbl = document.getElementById('cbLabel');
-  if (cb)  cb.checked = _customerBookingEnabled;
   if (lbl) {
-    lbl.textContent  = _customerBookingEnabled ? 'مفعّل' : 'معطّل';
-    lbl.style.color  = _customerBookingEnabled ? 'var(--green)' : 'var(--text-muted)';
+    lbl.textContent = _customerBookingEnabled ? 'مفعّل' : 'معطّل';
+    lbl.style.color = _customerBookingEnabled ? 'var(--green)' : 'var(--text-muted)';
   }
 }
 
-async function toggleCustomerBooking(enabled) {
-  _customerBookingEnabled = enabled;
+function openToggleBookingModal() {
+  const willEnable = !_customerBookingEnabled;
+  const titleEl = document.getElementById('toggleBookingTitle');
+  const warnEl  = document.getElementById('toggleBookingWarn');
+  const btnEl   = document.getElementById('btnToggleBookingConfirm');
+
+  if (willEnable) {
+    titleEl.textContent = '✅ تفعيل حجز العملاء';
+    titleEl.style.color = 'var(--green)';
+    warnEl.style.background = 'rgba(39,174,96,.1)';
+    warnEl.style.border = '1px solid rgba(39,174,96,.3)';
+    warnEl.style.color = 'var(--green)';
+    warnEl.innerHTML = '✅ سيتم <strong>تفعيل</strong> نموذج الحجز في الصفحة الرئيسية.<br>سيتمكن الزوار من حجز المواعيد مباشرةً.';
+    btnEl.style.background = 'var(--green)';
+    btnEl.textContent = 'تأكيد التفعيل';
+  } else {
+    titleEl.textContent = '⚠️ تعطيل حجز العملاء';
+    titleEl.style.color = 'var(--orange)';
+    warnEl.style.background = 'rgba(230,126,34,.1)';
+    warnEl.style.border = '1px solid rgba(230,126,34,.3)';
+    warnEl.style.color = 'var(--orange)';
+    warnEl.innerHTML = '⚠️ سيتم <strong>تعطيل</strong> نموذج الحجز في الصفحة الرئيسية.<br>لن يتمكن الزوار من حجز المواعيد حتى تُعيد التفعيل.';
+    btnEl.style.background = 'var(--orange)';
+    btnEl.textContent = 'تأكيد التعطيل';
+  }
+
+  document.getElementById('toggleBookingModal').classList.add('show');
+}
+
+function closeToggleBookingModal() {
+  document.getElementById('toggleBookingModal').classList.remove('show');
+}
+
+async function confirmToggleBooking() {
+  closeToggleBookingModal();
+  const newState = !_customerBookingEnabled;
+  _customerBookingEnabled = newState;
   applyCustomerBookingVisibility();
   try {
-    await fsSet('siteSettings', { customerBookingEnabled: enabled });
-    showToast(enabled ? '✅ تم تفعيل حجز العملاء' : '✅ تم تعطيل حجز العملاء');
+    await fsSet('siteSettings', { customerBookingEnabled: newState });
+    showToast(newState ? '✅ تم تفعيل حجز العملاء' : '✅ تم تعطيل حجز العملاء');
   } catch(e) {
     showToast('❌ خطأ في الحفظ','var(--red)');
   }
@@ -3289,6 +3339,8 @@ document.addEventListener('DOMContentLoaded', () => {
   if (sm) sm.addEventListener('click', e => { if (e.target === e.currentTarget) closeSuggest(); });
   const pm = document.getElementById('bookingPreviewModal');
   if (pm) pm.addEventListener('click', e => { if (e.target === e.currentTarget) closeBookingPreview(); });
+  const tm = document.getElementById('toggleBookingModal');
+  if (tm) tm.addEventListener('click', e => { if (e.target === e.currentTarget) closeToggleBookingModal(); });
 });
 
 /* ═══════════════════════════════════════════════
