@@ -482,6 +482,42 @@ thead th.sort-asc,thead th.sort-desc{color:var(--gold-light)}
 /* Customer bookings tab badge */
 .badge-cust{background:rgba(39,174,96,.15);color:var(--green);border:1px solid rgba(39,174,96,.3);
   font-size:.68rem;font-weight:700;padding:.1rem .4rem;border-radius:10px;margin-right:.25rem}
+
+/* ══ WORKING HOURS ══ */
+.wh-branch-card{background:var(--bg-card);border:1px solid var(--border);border-top:2px solid var(--gold-dark);margin-bottom:1.25rem}
+.wh-branch-header{display:flex;align-items:center;justify-content:space-between;padding:.9rem 1.25rem;border-bottom:1px solid var(--border);background:#0d0d0d}
+.wh-branch-title{font-size:.95rem;font-weight:700;color:var(--gold-light)}
+.wh-body{padding:1.25rem}
+.wh-mode-row{display:flex;gap:1rem;margin-bottom:1rem;flex-wrap:wrap}
+.wh-radio{display:flex;align-items:center;gap:.45rem;cursor:pointer;padding:.4rem .75rem;border:1px solid var(--border);transition:border-color .2s,background .2s}
+.wh-radio:hover{border-color:var(--border-gold)}
+.wh-radio input[type=radio]{accent-color:var(--gold);cursor:pointer}
+.wh-radio.selected{border-color:var(--gold);background:rgba(201,168,76,.06)}
+.wh-radio label{font-size:.85rem;color:var(--text-secondary);cursor:pointer}
+.wh-radio.selected label{color:var(--gold-light)}
+.wh-daily-row{display:flex;gap:.75rem;align-items:flex-end;flex-wrap:wrap}
+.wh-time-field{display:flex;flex-direction:column;gap:.3rem;flex:1;min-width:110px}
+.wh-time-field label{font-size:.75rem;color:var(--text-muted)}
+.wh-time-input{padding:.55rem .7rem;background:var(--bg-input);border:1px solid var(--border);color:var(--text-primary);font-family:'Tajawal',sans-serif;font-size:.9rem;outline:none;width:100%;transition:border-color .2s}
+.wh-time-input:focus{border-color:var(--gold)}
+.btn-wh-clear{padding:.5rem .9rem;background:transparent;border:1px solid var(--border);color:var(--text-muted);font-family:'Tajawal',sans-serif;font-size:.78rem;cursor:pointer;transition:all .2s;white-space:nowrap}
+.btn-wh-clear:hover{border-color:var(--red);color:var(--red);background:rgba(192,57,43,.06)}
+/* Custom schedule */
+.wh-custom{display:none}
+.wh-custom.visible{display:block}
+.wh-days-grid{display:flex;flex-direction:column;gap:.5rem}
+.wh-day-row{display:flex;align-items:center;gap:.75rem;padding:.6rem .85rem;background:var(--bg-input);border:1px solid var(--border);flex-wrap:wrap}
+.wh-day-label{font-size:.85rem;font-weight:600;color:var(--text-primary);min-width:65px}
+.wh-day-off{display:flex;align-items:center;gap:.35rem;font-size:.8rem;color:var(--text-muted);cursor:pointer;margin-right:auto;white-space:nowrap}
+.wh-day-off input[type=checkbox]{accent-color:var(--red);cursor:pointer}
+.wh-day-times{display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;flex:1}
+.wh-day-times.disabled{opacity:.3;pointer-events:none}
+/* Barber group */
+.wh-barber-group{background:var(--bg-card);border:1px solid var(--border);border-top:2px solid var(--border-gold);margin-bottom:1rem}
+.wh-barber-group-header{padding:.7rem 1rem;background:#0d0d0d;border-bottom:1px solid var(--border);font-size:.85rem;font-weight:700;color:var(--text-secondary)}
+.wh-barber-item{border-bottom:1px solid var(--border);padding:1rem 1.25rem}
+.wh-barber-item:last-child{border-bottom:none}
+.wh-barber-name{font-size:.88rem;font-weight:600;color:var(--text-primary);margin-bottom:.65rem}
 </style>
 </head>
 <body>
@@ -519,7 +555,7 @@ thead th.sort-asc,thead th.sort-desc{color:var(--gold-light)}
         </div>
         <div class="booking-field">
           <label>التاريخ <span style="color:var(--red)">*</span></label>
-          <input type="date" id="bDate"/>
+          <input type="date" id="bDate" onchange="updateBookingTimeConstraints()"/>
         </div>
         <div class="booking-field">
           <label>الفرع <span style="color:var(--red)">*</span></label>
@@ -860,46 +896,72 @@ thead th.sort-asc,thead th.sort-desc{color:var(--gold-light)}
         </div>
         <div class="alert-box alert-success" id="whOk"></div>
 
-        <!-- Branch hours -->
-        <div class="settings-card" style="margin-bottom:1.5rem;max-width:100%">
-          <h3 style="color:var(--gold-light);font-size:1rem;margin-bottom:1.25rem;padding-bottom:.75rem;border-bottom:1px solid var(--border)">🏪 ساعات عمل الفروع</h3>
-          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1.25rem">
-            <div>
-              <p style="font-size:.85rem;font-weight:600;color:var(--text-secondary);margin-bottom:.6rem">الفرع الأول</p>
-              <div style="display:flex;gap:.75rem;align-items:center;flex-wrap:wrap">
-                <div class="form-field" style="flex:1;min-width:120px">
-                  <label>من</label>
-                  <input type="time" id="wh_b1_open"/>
+        <!-- Branch hours — each branch in its own card -->
+        <div style="margin-bottom:1.5rem">
+          <p style="font-size:.9rem;font-weight:700;color:var(--gold-light);margin-bottom:.85rem">🏪 ساعات عمل الفروع</p>
+          <div id="branchHoursContainer">
+            <!-- branch1 -->
+            <div class="wh-branch-card">
+              <div class="wh-branch-header">
+                <span class="wh-branch-title">✂️ الفرع الأول</span>
+                <button class="btn-wh-clear" onclick="clearEntityHours('branch','branch1')">✕ حذف الأوقات</button>
+              </div>
+              <div class="wh-body">
+                <div class="wh-mode-row">
+                  <div class="wh-radio" id="whr_b1_daily" onclick="setWHMode('branch','branch1','daily')">
+                    <input type="radio" name="wh_branch1_mode" value="daily" checked/>
+                    <label>يومي (نفس الوقت كل يوم)</label>
+                  </div>
+                  <div class="wh-radio" id="whr_b1_custom" onclick="setWHMode('branch','branch1','custom')">
+                    <input type="radio" name="wh_branch1_mode" value="custom"/>
+                    <label>مخصص (لكل يوم على حدة)</label>
+                  </div>
                 </div>
-                <div class="form-field" style="flex:1;min-width:120px">
-                  <label>إلى</label>
-                  <input type="time" id="wh_b1_close"/>
+                <div id="whd_branch1">
+                  <div class="wh-daily-row">
+                    <div class="wh-time-field"><label>من</label><input type="time" class="wh-time-input" id="wh_b1_open"/></div>
+                    <div class="wh-time-field"><label>إلى</label><input type="time" class="wh-time-input" id="wh_b1_close"/></div>
+                  </div>
                 </div>
+                <div class="wh-custom" id="whc_branch1"></div>
               </div>
             </div>
-            <div>
-              <p style="font-size:.85rem;font-weight:600;color:var(--text-secondary);margin-bottom:.6rem">الفرع الثاني</p>
-              <div style="display:flex;gap:.75rem;align-items:center;flex-wrap:wrap">
-                <div class="form-field" style="flex:1;min-width:120px">
-                  <label>من</label>
-                  <input type="time" id="wh_b2_open"/>
+            <!-- branch2 -->
+            <div class="wh-branch-card">
+              <div class="wh-branch-header">
+                <span class="wh-branch-title">✂️ الفرع الثاني</span>
+                <button class="btn-wh-clear" onclick="clearEntityHours('branch','branch2')">✕ حذف الأوقات</button>
+              </div>
+              <div class="wh-body">
+                <div class="wh-mode-row">
+                  <div class="wh-radio" id="whr_b2_daily" onclick="setWHMode('branch','branch2','daily')">
+                    <input type="radio" name="wh_branch2_mode" value="daily" checked/>
+                    <label>يومي (نفس الوقت كل يوم)</label>
+                  </div>
+                  <div class="wh-radio" id="whr_b2_custom" onclick="setWHMode('branch','branch2','custom')">
+                    <input type="radio" name="wh_branch2_mode" value="custom"/>
+                    <label>مخصص (لكل يوم على حدة)</label>
+                  </div>
                 </div>
-                <div class="form-field" style="flex:1;min-width:120px">
-                  <label>إلى</label>
-                  <input type="time" id="wh_b2_close"/>
+                <div id="whd_branch2">
+                  <div class="wh-daily-row">
+                    <div class="wh-time-field"><label>من</label><input type="time" class="wh-time-input" id="wh_b2_open"/></div>
+                    <div class="wh-time-field"><label>إلى</label><input type="time" class="wh-time-input" id="wh_b2_close"/></div>
+                  </div>
                 </div>
+                <div class="wh-custom" id="whc_branch2"></div>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- Barber hours -->
-        <div class="settings-card" style="max-width:100%">
-          <h3 style="color:var(--gold-light);font-size:1rem;margin-bottom:1.25rem;padding-bottom:.75rem;border-bottom:1px solid var(--border)">✂️ ساعات عمل الحلاقين</h3>
-          <div id="barberHoursGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1rem"></div>
+        <!-- Barber hours — grouped by branch -->
+        <div style="margin-bottom:1.5rem">
+          <p style="font-size:.9rem;font-weight:700;color:var(--gold-light);margin-bottom:.85rem">✂️ ساعات عمل الحلاقين</p>
+          <div id="barberHoursGrid"></div>
         </div>
 
-        <button class="btn-save" style="margin-top:1.5rem;max-width:300px" onclick="saveWorkingHours()">💾&nbsp; حفظ ساعات العمل</button>
+        <button class="btn-save" style="max-width:300px" onclick="saveWorkingHours()">💾&nbsp; حفظ ساعات العمل</button>
       </div>
     </div>
 
@@ -2399,21 +2461,140 @@ async function loadWorkingHours() {
   } catch(e) {}
 }
 
-async function saveWorkingHours() {
-  workingHours.branches.branch1.open  = document.getElementById('wh_b1_open').value;
-  workingHours.branches.branch1.close = document.getElementById('wh_b1_close').value;
-  workingHours.branches.branch2.open  = document.getElementById('wh_b2_open').value;
-  workingHours.branches.branch2.close = document.getElementById('wh_b2_close').value;
+/* ── DAY NAMES ── */
+const DAY_NAMES = ['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
 
-  // Collect barber hours
+/* ── Render custom day schedule HTML for a given entity key ── */
+function renderCustomDays(entityKey) {
+  const data = workingHours._custom?.[entityKey] || {};
+  const ts = 'width:80px;padding:.4rem .35rem;background:var(--bg-card);border:1px solid var(--border);color:var(--text-primary);font-family:inherit;font-size:.8rem;outline:none';
+  return `<div class="wh-days-grid" style="margin-top:.85rem">` +
+    DAY_NAMES.map((d,i) => {
+      const day = data[i] || {open:'',close:'',off:false};
+      return `<div class="wh-day-row">
+        <span class="wh-day-label">${d}</span>
+        <div class="wh-day-times${day.off?' disabled':''}" id="whdtimes_${entityKey}_${i}">
+          <span style="font-size:.75rem;color:var(--text-muted)">من</span>
+          <input type="time" style="${ts}" id="whd_${entityKey}_${i}_o" value="${day.open}" ${day.off?'disabled':''}/>
+          <span style="font-size:.75rem;color:var(--text-muted)">إلى</span>
+          <input type="time" style="${ts}" id="whd_${entityKey}_${i}_c" value="${day.close}" ${day.off?'disabled':''}/>
+        </div>
+        <label class="wh-day-off">
+          <input type="checkbox" id="whd_${entityKey}_${i}_off" ${day.off?'checked':''}
+            onchange="toggleDayOff('${entityKey}',${i})"/> يوم إجازة
+        </label>
+      </div>`;
+    }).join('') + '</div>';
+}
+
+function toggleDayOff(entityKey, idx) {
+  const off = document.getElementById(`whd_${entityKey}_${idx}_off`).checked;
+  const times = document.getElementById(`whdtimes_${entityKey}_${idx}`);
+  const o  = document.getElementById(`whd_${entityKey}_${idx}_o`);
+  const cl = document.getElementById(`whd_${entityKey}_${idx}_c`);
+  times.classList.toggle('disabled', off);
+  o.disabled = off; cl.disabled = off;
+}
+
+/* ── Set mode (daily / custom) for branch or barber ── */
+function setWHMode(type, key, mode) {
+  const entityKey = type + '_' + key;
+  const dailyDiv  = document.getElementById('whd_'  + (type==='branch' ? key : 'barber_'+key.replace(/\s+/g,'_')));
+  const customDiv = document.getElementById('whc_'  + (type==='branch' ? key : 'barber_'+key.replace(/\s+/g,'_')));
+  const rdDaily   = document.getElementById('whr_'  + (type==='branch' ? key : key.replace(/\s+/g,'_')) + '_daily');
+  const rdCustom  = document.getElementById('whr_'  + (type==='branch' ? key : key.replace(/\s+/g,'_')) + '_custom');
+
+  if (!dailyDiv || !customDiv) return;
+  if (mode === 'daily') {
+    dailyDiv.style.display  = 'block';
+    customDiv.classList.remove('visible');
+    if (rdDaily)  rdDaily.classList.add('selected');
+    if (rdCustom) rdCustom.classList.remove('selected');
+  } else {
+    dailyDiv.style.display  = 'none';
+    customDiv.classList.add('visible');
+    if (customDiv.innerHTML.trim() === '') {
+      customDiv.innerHTML = renderCustomDays(entityKey);
+    }
+    if (rdCustom) rdCustom.classList.add('selected');
+    if (rdDaily)  rdDaily.classList.remove('selected');
+  }
+}
+
+/* ── Clear all hours for an entity ── */
+function clearEntityHours(type, key) {
+  if (type === 'branch') {
+    workingHours.branches = workingHours.branches || {};
+    workingHours.branches[key] = {open:'',close:'',mode:'daily'};
+    delete (workingHours._custom||{})[`branch_${key}`];
+    const pf = key==='branch1' ? 'b1' : 'b2';
+    const od = document.getElementById(`wh_${pf}_open`);
+    const cd = document.getElementById(`wh_${pf}_close`);
+    if (od) od.value = '';
+    if (cd) cd.value = '';
+    // Reset to daily mode
+    setWHMode('branch', key, 'daily');
+    document.querySelectorAll(`input[name="wh_${key}_mode"]`).forEach(r => r.value==='daily' ? (r.checked=true) : (r.checked=false));
+  } else {
+    workingHours.barbers = workingHours.barbers || {};
+    workingHours.barbers[key] = {open:'',close:'',mode:'daily'};
+    delete (workingHours._custom||{})[`barber_${key}`];
+    const safeKey = key.replace(/\s+/g,'_');
+    const od = document.getElementById(`wh_barber_${safeKey}_open`);
+    const cd = document.getElementById(`wh_barber_${safeKey}_close`);
+    if (od) od.value = '';
+    if (cd) cd.value = '';
+    setWHMode('barber', key, 'daily');
+    document.querySelectorAll(`input[name="wh_barber_${safeKey}_mode"]`).forEach(r => r.value==='daily' ? (r.checked=true) : (r.checked=false));
+  }
+  showToast('✅ تم حذف الأوقات. اضغط "حفظ" لتطبيق التغييرات.');
+}
+
+/* ── Collect custom day data from DOM for an entity ── */
+function collectCustomDays(entityKey) {
+  const days = {};
+  DAY_NAMES.forEach((_, i) => {
+    const o   = document.getElementById(`whd_${entityKey}_${i}_o`);
+    const cl  = document.getElementById(`whd_${entityKey}_${i}_c`);
+    const off = document.getElementById(`whd_${entityKey}_${i}_off`);
+    if (o) days[i] = { open: o.value, close: cl.value, off: off?.checked||false };
+  });
+  return days;
+}
+
+/* ── SAVE ── */
+async function saveWorkingHours() {
+  if (!workingHours._custom) workingHours._custom = {};
+
+  // Branch 1
+  const b1mode = document.querySelector('input[name="wh_branch1_mode"]:checked')?.value || 'daily';
+  workingHours.branches.branch1 = {
+    open:  b1mode==='daily' ? (document.getElementById('wh_b1_open')?.value||'') : '',
+    close: b1mode==='daily' ? (document.getElementById('wh_b1_close')?.value||'') : '',
+    mode:  b1mode
+  };
+  if (b1mode==='custom') workingHours._custom['branch_branch1'] = collectCustomDays('branch_branch1');
+
+  // Branch 2
+  const b2mode = document.querySelector('input[name="wh_branch2_mode"]:checked')?.value || 'daily';
+  workingHours.branches.branch2 = {
+    open:  b2mode==='daily' ? (document.getElementById('wh_b2_open')?.value||'') : '',
+    close: b2mode==='daily' ? (document.getElementById('wh_b2_close')?.value||'') : '',
+    mode:  b2mode
+  };
+  if (b2mode==='custom') workingHours._custom['branch_branch2'] = collectCustomDays('branch_branch2');
+
+  // Barbers
   const allBarbers = [...(barbers.branch1||[]), ...(barbers.branch2||[])];
   allBarbers.forEach(name => {
-    const key = name.replace(/\s+/g,'_');
-    const o = document.getElementById('wh_barber_'+key+'_open');
-    const cl = document.getElementById('wh_barber_'+key+'_close');
-    if (o && cl) {
-      workingHours.barbers[name] = { open: o.value, close: cl.value };
-    }
+    const safeKey = name.replace(/\s+/g,'_');
+    const mode = document.querySelector(`input[name="wh_barber_${safeKey}_mode"]:checked`)?.value || 'daily';
+    workingHours.barbers[name] = {
+      open:  mode==='daily' ? (document.getElementById(`wh_barber_${safeKey}_open`)?.value||'') : '',
+      close: mode==='daily' ? (document.getElementById(`wh_barber_${safeKey}_close`)?.value||'') : '',
+      mode
+    };
+    if (mode==='custom') workingHours._custom[`barber_${name}`] = collectCustomDays(`barber_${name}`);
   });
 
   try {
@@ -2428,47 +2609,133 @@ async function saveWorkingHours() {
   }
 }
 
+/* ── Render barber hours grid grouped by branch ── */
 function renderBarberHoursGrid() {
   const grid = document.getElementById('barberHoursGrid');
   if (!grid) return;
-  const allBarbers = [...(barbers.branch1||[]), ...(barbers.branch2||[])];
-  if (!allBarbers.length) { grid.innerHTML='<p style="color:var(--text-muted);font-size:.85rem">لا يوجد حلاقون مضافون بعد</p>'; return; }
-  grid.innerHTML = allBarbers.map(name => {
-    const key = name.replace(/\s+/g,'_');
-    const hrs = workingHours.barbers[name] || {open:'',close:''};
-    const br  = (barbers.branch1||[]).includes(name) ? 'الفرع الأول' : 'الفرع الثاني';
-    return `<div style="background:var(--bg-input);border:1px solid var(--border);padding:.85rem">
-      <p style="font-size:.82rem;font-weight:600;color:var(--text-primary);margin-bottom:.5rem">${esc(name)} <span style="font-size:.7rem;color:var(--text-muted)">(${br})</span></p>
-      <div style="display:flex;gap:.5rem;align-items:center">
-        <div style="flex:1"><label style="font-size:.72rem;color:var(--text-muted)">من</label>
-          <input type="time" id="wh_barber_${key}_open" value="${hrs.open}"
-            style="width:100%;padding:.45rem .5rem;background:var(--bg-card);border:1px solid var(--border);color:var(--text-primary);font-family:inherit;font-size:.85rem;outline:none"/></div>
-        <div style="flex:1"><label style="font-size:.72rem;color:var(--text-muted)">إلى</label>
-          <input type="time" id="wh_barber_${key}_close" value="${hrs.close}"
-            style="width:100%;padding:.45rem .5rem;background:var(--bg-card);border:1px solid var(--border);color:var(--text-primary);font-family:inherit;font-size:.85rem;outline:none"/></div>
+  const b1 = barbers.branch1||[], b2 = barbers.branch2||[];
+  if (!b1.length && !b2.length) {
+    grid.innerHTML='<p style="color:var(--text-muted);font-size:.85rem">لا يوجد حلاقون مضافون بعد</p>'; return;
+  }
+  const ts = 'width:100%;padding:.45rem .5rem;background:var(--bg-card);border:1px solid var(--border);color:var(--text-primary);font-family:inherit;font-size:.85rem;outline:none';
+
+  function barberCard(name) {
+    const safeKey = name.replace(/\s+/g,'_');
+    const hrs = workingHours.barbers?.[name] || {open:'',close:'',mode:'daily'};
+    const isCustom = hrs.mode === 'custom';
+    const customData = workingHours._custom?.[`barber_${name}`] || {};
+    const customHtml = isCustom ? renderCustomDays(`barber_${name}`) : '';
+    return `<div class="wh-barber-item">
+      <div class="wh-barber-name">${esc(name)}</div>
+      <div class="wh-mode-row">
+        <div class="wh-radio${!isCustom?' selected':''}" id="whr_${safeKey}_daily"
+          onclick="setWHMode('barber','${name}','daily')">
+          <input type="radio" name="wh_barber_${safeKey}_mode" value="daily" ${!isCustom?'checked':''}/>
+          <label>يومي</label>
+        </div>
+        <div class="wh-radio${isCustom?' selected':''}" id="whr_${safeKey}_custom"
+          onclick="setWHMode('barber','${name}','custom')">
+          <input type="radio" name="wh_barber_${safeKey}_mode" value="custom" ${isCustom?'checked':''}/>
+          <label>مخصص</label>
+        </div>
+        <button class="btn-wh-clear" style="margin-right:auto" onclick="clearEntityHours('barber','${name}')">✕ حذف الأوقات</button>
+      </div>
+      <div id="whd_barber_${safeKey}" style="${isCustom?'display:none':''}">
+        <div class="wh-daily-row">
+          <div class="wh-time-field"><label>من</label>
+            <input type="time" class="wh-time-input" id="wh_barber_${safeKey}_open" value="${hrs.open}"/></div>
+          <div class="wh-time-field"><label>إلى</label>
+            <input type="time" class="wh-time-input" id="wh_barber_${safeKey}_close" value="${hrs.close}"/></div>
+        </div>
+      </div>
+      <div class="wh-custom${isCustom?' visible':''}" id="whc_barber_${safeKey}">
+        ${customHtml}
       </div>
     </div>`;
-  }).join('');
+  }
+
+  let html = '';
+  if (b1.length) {
+    html += `<div class="wh-barber-group">
+      <div class="wh-barber-group-header">✂️ الفرع الأول</div>
+      ${b1.map(barberCard).join('')}
+    </div>`;
+  }
+  if (b2.length) {
+    html += `<div class="wh-barber-group">
+      <div class="wh-barber-group-header">✂️ الفرع الثاني</div>
+      ${b2.map(barberCard).join('')}
+    </div>`;
+  }
+  grid.innerHTML = html;
 }
 
+/* ── Populate entire working hours UI from stored data ── */
 function populateWorkingHoursUI() {
   const b1o = document.getElementById('wh_b1_open');
   if (!b1o) return;
-  b1o.value = workingHours.branches?.branch1?.open  || '';
-  document.getElementById('wh_b1_close').value = workingHours.branches?.branch1?.close || '';
-  document.getElementById('wh_b2_open').value  = workingHours.branches?.branch2?.open  || '';
-  document.getElementById('wh_b2_close').value = workingHours.branches?.branch2?.close || '';
+
+  // Branch 1
+  const b1 = workingHours.branches?.branch1 || {};
+  b1o.value = b1.open || '';
+  document.getElementById('wh_b1_close').value = b1.close || '';
+  if (b1.mode === 'custom') {
+    setWHMode('branch','branch1','custom');
+    const div = document.getElementById('whc_branch1');
+    if (div) div.innerHTML = renderCustomDays('branch_branch1');
+    document.querySelectorAll('input[name="wh_branch1_mode"]').forEach(r => { r.checked = r.value === 'custom'; });
+    document.getElementById('whr_b1_daily')?.classList.remove('selected');
+    document.getElementById('whr_b1_custom')?.classList.add('selected');
+  }
+
+  // Branch 2
+  const b2 = workingHours.branches?.branch2 || {};
+  document.getElementById('wh_b2_open').value  = b2.open  || '';
+  document.getElementById('wh_b2_close').value = b2.close || '';
+  if (b2.mode === 'custom') {
+    setWHMode('branch','branch2','custom');
+    const div = document.getElementById('whc_branch2');
+    if (div) div.innerHTML = renderCustomDays('branch_branch2');
+    document.querySelectorAll('input[name="wh_branch2_mode"]').forEach(r => { r.checked = r.value === 'custom'; });
+    document.getElementById('whr_b2_daily')?.classList.remove('selected');
+    document.getElementById('whr_b2_custom')?.classList.add('selected');
+  }
+
   renderBarberHoursGrid();
 }
 
+// Get day index for a date string (dd/mm/yyyy) or today
+function getDayIdx(dateStr) {
+  if (!dateStr) return new Date().getDay();
+  const [d,m,y] = dateStr.split('/').map(Number);
+  return new Date(y, m-1, d).getDay();
+}
+
+// Resolve hours for an entity (branch or barber) considering mode + day
+function resolveEntityHours(entityData, entityKey, dateStr) {
+  if (!entityData) return {open:'',close:''};
+  const mode = entityData.mode || 'daily';
+  if (mode === 'daily') return {open: entityData.open||'', close: entityData.close||''};
+  // Custom: look up the day
+  const dayIdx = getDayIdx(dateStr);
+  const custom = workingHours._custom?.[entityKey]?.[dayIdx];
+  if (!custom || custom.off) return {open:'CLOSED',close:'CLOSED'}; // day off
+  return {open: custom.open||'', close: custom.close||''};
+}
+
 // Get effective working hours for a barber+branch (most restrictive wins)
-function getEffectiveHours(branch, barberName) {
-  const bh = workingHours.branches?.[branch] || {open:'',close:''};
-  const ah = workingHours.barbers?.[barberName] || {open:'',close:''};
+function getEffectiveHours(branch, barberName, dateStr) {
+  const bData = workingHours.branches?.[branch];
+  const aData = workingHours.barbers?.[barberName];
+  const bh = resolveEntityHours(bData, 'branch_'+branch, dateStr);
+  const ah = resolveEntityHours(aData, 'barber_'+barberName, dateStr);
+
+  // If either is CLOSED (day off), treat as closed
+  if (bh.open==='CLOSED' || ah.open==='CLOSED') return {open:'CLOSED',close:'CLOSED'};
+
   let open  = bh.open  || ah.open  || '';
   let close = bh.close || ah.close || '';
-  // If both set, use most restrictive
-  if (bh.open && ah.open)   open  = bh.open  > ah.open  ? bh.open  : ah.open;
+  if (bh.open  && ah.open)  open  = bh.open  > ah.open  ? bh.open  : ah.open;
   if (bh.close && ah.close) close = bh.close < ah.close ? bh.close : ah.close;
   return {open, close};
 }
@@ -2477,17 +2744,20 @@ function getEffectiveHours(branch, barberName) {
 function updateBookingTimeConstraints() {
   const branch  = document.getElementById('bBranch').value;
   const barber  = document.getElementById('bBarber').value;
+  const date    = document.getElementById('bDate').value;
   const timeEl  = document.getElementById('bTime');
   if (!branch || !barber) { timeEl.removeAttribute('min'); timeEl.removeAttribute('max'); return; }
-  const {open, close} = getEffectiveHours(branch, barber);
-  if (open)  timeEl.setAttribute('min', open);  else timeEl.removeAttribute('min');
-  if (close) timeEl.setAttribute('max', close); else timeEl.removeAttribute('max');
+  const dateStr = date ? fmtDate(date) : '';
+  const {open, close} = getEffectiveHours(branch, barber, dateStr);
+  if (open && open !== 'CLOSED')  timeEl.setAttribute('min', open);  else timeEl.removeAttribute('min');
+  if (close && close !== 'CLOSED') timeEl.setAttribute('max', close); else timeEl.removeAttribute('max');
 }
 
 // Check if a time (HH:MM) is within working hours for branch+barber
-function isWithinWorkingHours(branch, barberName, hhmm) {
-  const {open, close} = getEffectiveHours(branch, barberName);
-  if (!open && !close) return true;  // no hours set = always open
+function isWithinWorkingHours(branch, barberName, hhmm, dateStr) {
+  const {open, close} = getEffectiveHours(branch, barberName, dateStr);
+  if (open === 'CLOSED') return false;  // day off
+  if (!open && !close) return true;     // no hours set = always open
   if (open  && hhmm < open)  return false;
   if (close && hhmm > close) return false;
   return true;
@@ -2524,13 +2794,13 @@ function onBookingBranchChange() {
 let _bookingPreview = null;
 
 // Get free time suggestions (2 before, 2 after), step = 30 min
-function getSuggestions(barber, date, timeRaw, branch) {
+function getSuggestions(barber, date, timeRaw, branch, dateStr) {
   const base = timeToMins(timeRaw);
   const taken = customers
     .filter(c => c.barber === barber && c.date === date && c.timeRaw)
     .map(c => timeToMins(c.timeRaw));
 
-  const {open, close} = getEffectiveHours(branch || '', barber);
+  const {open, close} = getEffectiveHours(branch || '', barber, dateStr||'');
   const minMins = open  ? timeToMins(open)  : 0;
   const maxMins = close ? timeToMins(close) : 23*60+30;
 
@@ -2597,8 +2867,8 @@ async function submitBooking() {
   const branchLabel = BRANCH_LABELS[branch] || branch;
 
   // Check working hours
-  if (!isWithinWorkingHours(branch, barber, timeRaw)) {
-    const {open, close} = getEffectiveHours(branch, barber);
+  if (!isWithinWorkingHours(branch, barber, timeRaw, dateFmt)) {
+    const {open, close} = getEffectiveHours(branch, barber, dateFmt);
     const errEl = document.getElementById('bErr');
     errEl.textContent = `⚠️ الوقت المختار خارج ساعات العمل. ساعات العمل: ${to12h(open)} — ${to12h(close)}`;
     errEl.classList.add('show');
@@ -2608,7 +2878,7 @@ async function submitBooking() {
   // Check conflict
   const conflict = findConflict(barber, dateFmt, timeRaw);
   if (conflict) {
-    const suggestions = getSuggestions(barber, dateFmt, timeRaw, branch);
+    const suggestions = getSuggestions(barber, dateFmt, timeRaw, branch, dateFmt);
     const diff = Math.abs(timeToMins(conflict.timeRaw||'00:00') - timeToMins(timeRaw));
 
     document.getElementById('suggestMsg').innerHTML =
