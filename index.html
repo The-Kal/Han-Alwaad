@@ -2900,18 +2900,34 @@ function updateBookingTimeConstraints() {
   if (!branch || !barber) { timeEl.removeAttribute('min'); timeEl.removeAttribute('max'); return; }
   const dateStr = date ? fmtDate(date) : '';
   const {open, close} = getEffectiveHours(branch, barber, dateStr);
-  if (open && open !== 'CLOSED')  timeEl.setAttribute('min', open);  else timeEl.removeAttribute('min');
-  if (close && close !== 'CLOSED') timeEl.setAttribute('max', close); else timeEl.removeAttribute('max');
+  if (open === 'CLOSED') { timeEl.removeAttribute('min'); timeEl.removeAttribute('max'); return; }
+  // For overnight shifts (close < open), browser min/max don't work correctly —
+  // skip them and let isWithinWorkingHours handle validation on submit
+  const isOvernight = open && close && close < open;
+  if (isOvernight) { timeEl.removeAttribute('min'); timeEl.removeAttribute('max'); return; }
+  if (open)  timeEl.setAttribute('min', open);  else timeEl.removeAttribute('min');
+  if (close) timeEl.setAttribute('max', close); else timeEl.removeAttribute('max');
 }
 
 // Check if a time (HH:MM) is within working hours for branch+barber
+// Handles overnight shifts where close < open (e.g. open 12:00, close 03:00 next day)
 function isWithinWorkingHours(branch, barberName, hhmm, dateStr) {
   const {open, close} = getEffectiveHours(branch, barberName, dateStr);
-  if (open === 'CLOSED') return false;  // day off
-  if (!open && !close) return true;     // no hours set = always open
-  if (open  && hhmm < open)  return false;
-  if (close && hhmm > close) return false;
-  return true;
+  if (open === 'CLOSED') return false;  // explicit day off
+  if (!open && !close)   return true;   // no hours set = no restriction
+
+  const isOvernight = close && open && close < open; // e.g. open=12:00, close=03:00
+
+  if (isOvernight) {
+    // Valid times: >= open (afternoon/evening) OR <= close (early morning next day)
+    if (open  && hhmm < open  && hhmm > close) return false;
+    return true;
+  } else {
+    // Normal same-day range
+    if (open  && hhmm < open)  return false;
+    if (close && hhmm > close) return false;
+    return true;
+  }
 }
 
 
@@ -2991,12 +3007,17 @@ function getSuggestions(barber, date, timeRaw, branch, dateStr) {
     .map(c => timeToMins(c.timeRaw));
 
   const {open, close} = getEffectiveHours(branch || '', barber, dateStr||'');
-  const minMins = open  ? timeToMins(open)  : 0;
-  const maxMins = close ? timeToMins(close) : 23*60+30;
+  const openMins  = (open  && open  !== 'CLOSED') ? timeToMins(open)  : null;
+  const closeMins = (close && close !== 'CLOSED') ? timeToMins(close) : null;
+  const isOvn = openMins !== null && closeMins !== null && closeMins < openMins;
 
   const isFree = (mins) => {
-    if (mins < minMins || mins > maxMins) return false;
-    return !taken.some(t => Math.abs(t - mins) < SLOT_MIN);
+    const m = ((mins % 1440) + 1440) % 1440; // normalize to 0-1439
+    if (openMins !== null && closeMins !== null) {
+      if (isOvn) { if (m < openMins && m > closeMins) return false; }
+      else       { if (m < openMins || m > closeMins) return false; }
+    }
+    return !taken.some(t => Math.abs(t - m) < SLOT_MIN);
   };
 
   const before = [], after = [];
@@ -3012,8 +3033,10 @@ function getSuggestions(barber, date, timeRaw, branch, dateStr) {
 }
 
 function minsToHHMM(mins) {
-  const h = Math.floor(mins/60), m = mins%60;
-  return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+  const m = ((mins % 1440) + 1440) % 1440; // normalize: handles negative & >1439
+  const h = Math.floor(m / 60);
+  const mm = m % 60;
+  return `${String(h).padStart(2,'0')}:${String(mm).padStart(2,'0')}`;
 }
 
 // Validate booking form fields, return false if invalid
