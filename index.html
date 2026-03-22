@@ -426,6 +426,62 @@ thead th.sort-asc,thead th.sort-desc{color:var(--gold-light)}
 }
 
 @media print{.admin-header,.admin-tabs,.entry-card,.tbl-actions,.row-actions,.btn-icon{display:none!important}body{background:#fff;color:#000}table,thead th,tbody td{color:#000!important}.table-card{border:1px solid #ccc}}
+
+/* ══ CUSTOMER BOOKING FORM ══ */
+.booking-section{width:100%;max-width:720px;margin:2.5rem auto 0;padding:0 1.5rem 3rem}
+.booking-section h2{font-size:1.2rem;font-weight:700;color:var(--gold-light);text-align:center;margin-bottom:.3rem}
+.booking-section .booking-sub{text-align:center;color:var(--text-muted);font-size:.85rem;margin-bottom:1.5rem}
+.booking-card{background:var(--bg-card);border:1px solid var(--border-gold);padding:2rem;position:relative}
+.booking-card::before,.booking-card::after{content:'';position:absolute;width:16px;height:16px;border-color:var(--gold);border-style:solid}
+.booking-card::before{top:-1px;right:-1px;border-width:2px 2px 0 0}
+.booking-card::after{bottom:-1px;left:-1px;border-width:0 0 2px 2px}
+.booking-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem}
+.booking-field{display:flex;flex-direction:column;gap:.35rem}
+.booking-field label{font-size:.82rem;color:var(--text-secondary);font-weight:500}
+.booking-field input,.booking-field select{
+  padding:.7rem .9rem;background:var(--bg-input);border:1px solid var(--border);
+  color:var(--text-primary);font-family:'Tajawal',sans-serif;font-size:.92rem;
+  outline:none;transition:border-color .2s;direction:rtl;width:100%}
+.booking-field input:focus,.booking-field select:focus{border-color:var(--gold)}
+.booking-field input.b-invalid,.booking-field select.b-invalid{border-color:var(--red)}
+.booking-field select option{background:var(--bg-card)}
+.btn-book{width:100%;margin-top:1.5rem;padding:.9rem;
+  background:linear-gradient(135deg,var(--gold-dark),var(--gold));
+  border:none;color:var(--bg-deep);font-family:'Tajawal',sans-serif;
+  font-size:1rem;font-weight:700;cursor:pointer;transition:opacity .2s,transform .1s}
+.btn-book:hover{opacity:.9;transform:translateY(-1px)}
+.btn-book:disabled{opacity:.4;cursor:not-allowed;transform:none}
+
+/* Suggestions modal */
+.suggestion-list{display:flex;flex-direction:column;gap:.5rem;margin:1rem 0}
+.suggestion-btn{
+  padding:.65rem 1rem;background:var(--bg-input);border:1px solid var(--border);
+  color:var(--text-primary);font-family:'Tajawal',sans-serif;font-size:.9rem;
+  cursor:pointer;transition:all .2s;text-align:right;display:flex;
+  align-items:center;justify-content:space-between}
+.suggestion-btn:hover{border-color:var(--gold);background:rgba(201,168,76,.07);color:var(--gold-light)}
+.suggestion-label{font-size:.72rem;color:var(--text-muted);margin-right:.5rem}
+
+/* Confirmation screen */
+.confirm-box{
+  background:var(--bg-card);border:1px solid var(--border-gold);
+  max-width:440px;margin:0 auto;padding:2.5rem 2rem;text-align:center}
+.confirm-icon{font-size:3rem;margin-bottom:1rem}
+.confirm-title{font-size:1.3rem;font-weight:800;color:var(--gold-light);margin-bottom:.5rem}
+.confirm-sub{font-size:.88rem;color:var(--text-muted);margin-bottom:1.5rem}
+.confirm-details{background:#0d0d0d;border:1px solid var(--border);padding:1.25rem;text-align:right;margin-bottom:1.5rem}
+.confirm-row{display:flex;justify-content:space-between;align-items:center;padding:.4rem 0;border-bottom:1px solid var(--border)}
+.confirm-row:last-child{border-bottom:none}
+.confirm-key{font-size:.8rem;color:var(--text-muted)}
+.confirm-val{font-size:.88rem;color:var(--text-primary);font-weight:600}
+.btn-back-home{display:inline-block;margin-top:.5rem;padding:.75rem 2rem;
+  border:1px solid var(--gold);color:var(--gold);font-family:'Tajawal',sans-serif;
+  font-size:.9rem;cursor:pointer;background:transparent;transition:all .3s}
+.btn-back-home:hover{background:var(--gold);color:var(--bg-deep)}
+
+/* Customer bookings tab badge */
+.badge-cust{background:rgba(39,174,96,.15);color:var(--green);border:1px solid rgba(39,174,96,.3);
+  font-size:.68rem;font-weight:700;padding:.1rem .4rem;border-radius:10px;margin-right:.25rem}
 </style>
 </head>
 <body>
@@ -435,24 +491,87 @@ thead th.sort-asc,thead th.sort-desc{color:var(--gold-light)}
   <div style="position:absolute;inset:0;overflow:hidden;pointer-events:none">
     <div class="deco-line"></div><div class="deco-line"></div>
   </div>
-  <div class="landing-content">
-    <svg style="display:block;margin:0 auto 1.5rem" width="60" height="160" viewBox="0 0 60 160" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect x="22" y="0" width="16" height="8" rx="2" fill="#c9a84c"/>
-      <rect x="22" y="152" width="16" height="8" rx="2" fill="#c9a84c"/>
-      <rect x="24" y="8" width="12" height="144" fill="#1a1a1a" stroke="#2a2a2a" stroke-width="1"/>
-      <path d="M24 8 Q30 28 36 48 Q42 68 36 88 Q30 108 24 128 Q18 148 24 152" stroke="white" stroke-width="3.5" fill="none" stroke-linecap="round"/>
-      <path d="M36 8 Q42 28 36 48 Q30 68 24 88 Q18 108 24 128 Q30 148 36 152" stroke="#c0392b" stroke-width="3.5" fill="none" stroke-linecap="round"/>
-      <path d="M30 8 Q36 28 30 48 Q24 68 30 88 Q36 108 30 128 Q24 148 30 152" stroke="#c9a84c" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.7"/>
-    </svg>
-    <h1 class="brand-ar">حلاق حان الوعد</h1>
-    <p class="brand-sub">صالون الحلاقة المتميز &mdash; الأناقة بمعاييرها الحقيقية</p>
-    <div class="divider"><div class="divider-line"></div><div class="divider-diamond"></div><div class="divider-line"></div></div>
-    <button class="btn-admin" onclick="showScreen('login')">🔑&nbsp; دخول لوحة الإدارة</button>
-    <div class="services-strip">
-      <div class="service-item"><div class="service-icon">✂️</div><div class="service-label">قص الشعر</div></div>
-      <div class="service-item"><div class="service-icon">🪒</div><div class="service-label">حلاقة الذقن</div></div>
-      <div class="service-item"><div class="service-icon">💈</div><div class="service-label">الباقات المميزة</div></div>
-      <div class="service-item"><div class="service-icon">👑</div><div class="service-label">العناية الفاخرة</div></div>
+  <!-- CUSTOMER BOOKING FORM — top of page -->
+  <div class="booking-section" id="bookingSection" style="margin-top:0;padding-top:2rem">
+    <div style="text-align:center;margin-bottom:1.5rem">
+      <svg style="display:block;margin:0 auto .75rem" width="44" height="118" viewBox="0 0 60 160" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="22" y="0" width="16" height="8" rx="2" fill="#c9a84c"/>
+        <rect x="22" y="152" width="16" height="8" rx="2" fill="#c9a84c"/>
+        <rect x="24" y="8" width="12" height="144" fill="#1a1a1a" stroke="#2a2a2a" stroke-width="1"/>
+        <path d="M24 8 Q30 28 36 48 Q42 68 36 88 Q30 108 24 128 Q18 148 24 152" stroke="white" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+        <path d="M36 8 Q42 28 36 48 Q30 68 24 88 Q18 108 24 128 Q30 148 36 152" stroke="#c0392b" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+        <path d="M30 8 Q36 28 30 48 Q24 68 30 88 Q36 108 30 128 Q24 148 30 152" stroke="#c9a84c" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.7"/>
+      </svg>
+      <h1 class="brand-ar" style="font-size:clamp(1.8rem,6vw,3.5rem)">حلاق حان الوعد</h1>
+      <p class="brand-sub" style="margin-bottom:0">صالون الحلاقة المتميز — الأناقة بمعاييرها الحقيقية</p>
+    </div>
+    <h2>احجز موعدك الآن</h2>
+    <p class="booking-sub">أدخل بياناتك واختر الوقت المناسب</p>
+    <div class="booking-card">
+      <div class="booking-grid">
+        <div class="booking-field">
+          <label>اسم العميل <span style="color:var(--red)">*</span></label>
+          <input type="text" id="bName" placeholder="مثال: محمد أحمد" maxlength="80" autocorrect="off"/>
+        </div>
+        <div class="booking-field">
+          <label>رقم الجوال <span style="color:var(--red)">*</span></label>
+          <input type="tel" id="bPhone" placeholder="05XXXXXXXX" maxlength="10" inputmode="numeric"/>
+        </div>
+        <div class="booking-field">
+          <label>التاريخ <span style="color:var(--red)">*</span></label>
+          <input type="date" id="bDate"/>
+        </div>
+        <div class="booking-field">
+          <label>الفرع <span style="color:var(--red)">*</span></label>
+          <select id="bBranch" onchange="onBookingBranchChange()">
+            <option value="" disabled selected>اختر الفرع</option>
+            <option value="branch1">الفرع الأول</option>
+            <option value="branch2">الفرع الثاني</option>
+          </select>
+        </div>
+        <div class="booking-field">
+          <label>اسم الحلاق <span style="color:var(--red)">*</span></label>
+          <select id="bBarber" disabled onchange="onBookingBarberChange()">
+            <option value="" disabled selected>اختر الفرع أولاً</option>
+          </select>
+        </div>
+        <div class="booking-field">
+          <label>الوقت <span style="color:var(--red)">*</span></label>
+          <input type="time" id="bTime"/>
+        </div>
+        <div class="booking-field">
+          <label>نوع الباقة <span style="color:var(--red)">*</span></label>
+          <select id="bPackage">
+            <option value="" disabled selected>اختر الباقة</option>
+            <option value="1">الباقة 1</option>
+            <option value="2">الباقة 2</option>
+            <option value="3">الباقة 3</option>
+            <option value="4">الباقة 4</option>
+            <option value="5">الباقة 5</option>
+            <option value="6">الباقة 6</option>
+            <option value="شعر">شعر</option>
+            <option value="دقن">دقن</option>
+            <option value="شعر + دقن">شعر + دقن</option>
+          </select>
+        </div>
+      </div>
+      <div class="alert-box alert-error" id="bErr" style="margin-top:1rem"></div>
+      <button class="btn-book" id="bBtn" onclick="submitBooking()">📅&nbsp; تأكيد الحجز</button>
+    </div>
+    <div style="text-align:center;margin-top:2rem;padding-bottom:2rem;border-top:1px solid var(--border);padding-top:1.5rem">
+      <p style="font-size:.8rem;color:var(--text-muted);margin-bottom:.85rem">هل أنت من الإدارة؟</p>
+      <button class="btn-admin" onclick="showScreen('login')" style="font-size:.85rem;padding:.65rem 1.8rem">🔑&nbsp; دخول لوحة الإدارة</button>
+    </div>
+  </div>
+
+  <!-- BOOKING CONFIRMATION -->
+  <div id="bookingConfirm" style="display:none;padding:3rem 1rem">
+    <div class="confirm-box">
+      <div class="confirm-icon">✅</div>
+      <div class="confirm-title">تم حجز موعدك بنجاح!</div>
+      <div class="confirm-sub">يسعدنا خدمتك في حلاق حان الوعد</div>
+      <div class="confirm-details" id="confirmDetails"></div>
+      <button class="btn-back-home" onclick="resetBookingForm()">← حجز موعد آخر</button>
     </div>
   </div>
 </div>
@@ -507,7 +626,8 @@ thead th.sort-asc,thead th.sort-desc{color:var(--gold-light)}
     <button class="tab-btn active" id="tabCustomers" onclick="switchTab('customers',this)">📋 العملاء</button>
     <button class="tab-btn" id="tabAdmins"     style="display:none" onclick="switchTab('admins',this)">👥 المشرفين</button>
     <button class="tab-btn" id="tabBarbers"    style="display:none" onclick="switchTab('barbers',this)">💈 الحلاقين</button>
-    <button class="tab-btn" id="tabSettings"   onclick="switchTab('settings',this)">⚙️ الإعدادات</button>
+    <button class="tab-btn" id="tabCustBookings" onclick="switchTab('custbookings',this)">🗓 حجوزات العملاء <span class="badge-cust" id="custBookBadge" style="display:none">0</span></button>
+    <button class="tab-btn" id="tabSettings"   onclick="switchTab('settings',this)">⚙️ لوحة التحكم</button>
   </nav>
 
   <div class="admin-body">
@@ -621,6 +741,7 @@ thead th.sort-asc,thead th.sort-desc{color:var(--gold-light)}
               <th class="sortable" onclick="sortBy('package')" id="th_package">الباقة</th>
               <th class="sortable" onclick="sortBy('branch')" id="th_branch">الفرع</th>
               <th class="sortable" onclick="sortBy('barber')" id="th_barber">الحلاق</th>
+              <th>أُدخل بواسطة</th>
               <th>إجراءات</th>
             </tr></thead>
             <tbody id="tableBody"></tbody>
@@ -702,13 +823,15 @@ thead th.sort-asc,thead th.sort-desc{color:var(--gold-light)}
       </div>
     </div>
 
-    <!-- ── TAB: SETTINGS ── -->
+    <!-- ── TAB: SETTINGS / CONTROL PANEL ── -->
     <div class="tab-panel" id="tab-settings">
       <div class="section-header">
         <div class="sh-icon">⚙️</div>
-        <div><h2>الإعدادات</h2><p>تغيير كلمة المرور الخاصة بحسابك</p></div>
+        <div><h2>لوحة التحكم</h2><p>إدارة كلمة المرور وساعات العمل</p></div>
       </div>
-      <div class="settings-card">
+
+      <!-- Password change -->
+      <div class="settings-card" style="margin-bottom:2rem">
         <h3 style="color:var(--gold-light);font-size:1rem;margin-bottom:1.25rem;padding-bottom:.75rem;border-bottom:1px solid var(--border)">🔑 تغيير كلمة المرور</h3>
         <div class="alert-box alert-error"   id="cpErr"></div>
         <div class="alert-box alert-success" id="cpOk"></div>
@@ -727,6 +850,80 @@ thead th.sort-asc,thead th.sort-desc{color:var(--gold-light)}
           <input type="password" id="cpConf" placeholder="أعد إدخال كلمة المرور الجديدة" maxlength="80"/>
         </div>
         <button class="btn-save" style="max-width:300px" onclick="changeOwnPassword()">💾&nbsp; حفظ كلمة المرور</button>
+      </div>
+
+      <!-- Working hours — super admin only -->
+      <div id="workingHoursSection" style="display:none">
+        <div class="section-header" style="margin-bottom:1rem">
+          <div class="sh-icon">🕐</div>
+          <div><h2>ساعات العمل</h2><p>تحديد أوقات العمل للفروع والحلاقين — تؤثر على نموذج حجز العملاء</p></div>
+        </div>
+        <div class="alert-box alert-success" id="whOk"></div>
+
+        <!-- Branch hours -->
+        <div class="settings-card" style="margin-bottom:1.5rem;max-width:100%">
+          <h3 style="color:var(--gold-light);font-size:1rem;margin-bottom:1.25rem;padding-bottom:.75rem;border-bottom:1px solid var(--border)">🏪 ساعات عمل الفروع</h3>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1.25rem">
+            <div>
+              <p style="font-size:.85rem;font-weight:600;color:var(--text-secondary);margin-bottom:.6rem">الفرع الأول</p>
+              <div style="display:flex;gap:.75rem;align-items:center;flex-wrap:wrap">
+                <div class="form-field" style="flex:1;min-width:120px">
+                  <label>من</label>
+                  <input type="time" id="wh_b1_open"/>
+                </div>
+                <div class="form-field" style="flex:1;min-width:120px">
+                  <label>إلى</label>
+                  <input type="time" id="wh_b1_close"/>
+                </div>
+              </div>
+            </div>
+            <div>
+              <p style="font-size:.85rem;font-weight:600;color:var(--text-secondary);margin-bottom:.6rem">الفرع الثاني</p>
+              <div style="display:flex;gap:.75rem;align-items:center;flex-wrap:wrap">
+                <div class="form-field" style="flex:1;min-width:120px">
+                  <label>من</label>
+                  <input type="time" id="wh_b2_open"/>
+                </div>
+                <div class="form-field" style="flex:1;min-width:120px">
+                  <label>إلى</label>
+                  <input type="time" id="wh_b2_close"/>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Barber hours -->
+        <div class="settings-card" style="max-width:100%">
+          <h3 style="color:var(--gold-light);font-size:1rem;margin-bottom:1.25rem;padding-bottom:.75rem;border-bottom:1px solid var(--border)">✂️ ساعات عمل الحلاقين</h3>
+          <div id="barberHoursGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1rem"></div>
+        </div>
+
+        <button class="btn-save" style="margin-top:1.5rem;max-width:300px" onclick="saveWorkingHours()">💾&nbsp; حفظ ساعات العمل</button>
+      </div>
+    </div>
+
+    <!-- ── TAB: CUSTOMER BOOKINGS ── -->
+    <div class="tab-panel" id="tab-custbookings">
+      <div class="section-header">
+        <div class="sh-icon">🗓</div>
+        <div><h2>حجوزات العملاء</h2><p>الحجوزات التي أجراها العملاء مباشرةً من الموقع</p></div>
+      </div>
+      <div class="table-card">
+        <div class="table-toolbar"><h3>قائمة حجوزات العملاء</h3></div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr>
+              <th>رقم التسلسل</th><th>اسم العميل</th><th>رقم الجوال</th>
+              <th>التاريخ</th><th>الوقت</th><th>الباقة</th><th>الفرع</th><th>الحلاق</th>
+            </tr></thead>
+            <tbody id="custBookBody"></tbody>
+          </table>
+          <div class="empty-state" id="custBookEmpty">
+            <div class="ei">🗓</div>
+            <p>لا توجد حجوزات من العملاء بعد.</p>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -901,6 +1098,19 @@ thead th.sort-asc,thead th.sort-desc{color:var(--gold-light)}
     <div class="modal-actions">
       <button class="btn-cancel" onclick="closeExportModal()">إلغاء</button>
       <button class="btn-modal-save" onclick="confirmExport()">⬇️ تحميل</button>
+    </div>
+  </div>
+</div>
+
+<!-- Booking suggestions modal -->
+<div class="modal-backdrop" id="suggestModal">
+  <div class="modal" style="max-width:440px">
+    <h3 style="color:var(--orange)">⚠️ الوقت المختار محجوز</h3>
+    <p id="suggestMsg" style="color:var(--text-secondary);font-size:.88rem;margin-bottom:1rem;line-height:1.6"></p>
+    <p style="font-size:.82rem;color:var(--text-muted);margin-bottom:.6rem">💡 الأوقات المتاحة المقترحة:</p>
+    <div class="suggestion-list" id="suggestList"></div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeSuggest()">← تغيير الوقت</button>
     </div>
   </div>
 </div>
@@ -1333,7 +1543,7 @@ async function doAddBarber() {
   if (barbers[branch]?.includes(name)) { errEl.textContent='⚠️ الحلاق موجود بالفعل في هذا الفرع'; errEl.classList.add('show'); return; }
   if (!barbers[branch]) barbers[branch] = [];
   barbers[branch].push(name);
-  await saveBarbers(); renderBarberList(); closeAddBarber();
+  await saveBarbers(); renderBarberList(); renderBarberHoursGrid(); closeAddBarber();
   showToast(`✅ تمت إضافة الحلاق ${esc(name)}`);
 }
 
@@ -1488,7 +1698,8 @@ async function saveEntry() {
   if(phone.length>0&&phone.length<7) showPhHint('رقم الجوال قصير جداً',true);
   if(!ok){showToast('⚠️ يرجى تعبئة جميع الحقول','var(--red)');return;}
   const dateFmt=fmtDate(date), branchLabel=BRANCH_LABELS[branch]||branch;
-  const entry={seq:nextSeq,name,phone,date:dateFmt,timeRaw:time,time:to12h(time),package:pkg,branchKey:branch,branch:branchLabel,barber};
+  const sess_e=getSession();
+  const entry={seq:nextSeq,name,phone,date:dateFmt,timeRaw:time,time:to12h(time),package:pkg,branchKey:branch,branch:branchLabel,barber,bookedBy:sess_e?.displayName||sess_e?.username||'admin',source:'admin'};
   const conflict=findConflict(barber,dateFmt,time);
   if(conflict){
     _pendingEntry=entry;
@@ -1640,6 +1851,7 @@ function renderTable() {
 
   populateFilters();
   updateSortHeaders();
+  renderCustBookings();
 
   if (!customers.length) {
     tbody.innerHTML=''; cards.innerHTML='';
@@ -1676,7 +1888,7 @@ function renderTable() {
   dateOrder.forEach(date => {
     const dayEntries = filtered.filter(c=>c.date===date);
     // Date group header row
-    tableHtml += `<tr class="date-group-header"><td colspan="9">📅 ${esc(date)} &nbsp;—&nbsp; ${dayEntries.length} حجز</td></tr>`;
+    tableHtml += `<tr class="date-group-header"><td colspan="10">📅 ${esc(date)} &nbsp;—&nbsp; ${dayEntries.length} حجز</td></tr>`;
     dayEntries.forEach((c,i) => {
       const actions=[];
       if(canEdit) actions.push(`<button class="btn-sm" onclick="openEditResv(${c.seq})">✏️</button>`);
@@ -1698,6 +1910,7 @@ function renderTable() {
         <td ${tdStyle}><span class="td-pkg">${esc(pkgLabel(c.package))}</span></td>
         <td class="td-branch" ${tdStyle}>${esc(c.branch||'')}</td>
         <td ${tdStyle}>${esc(c.barber)}</td>
+        <td ${tdStyle} style="font-size:.75rem">${c.source==='customer'?'<span style="color:var(--green);font-weight:600">🌐 عميل</span>':esc(c.bookedBy||'admin')}</td>
         <td ${tdStyle}><div class="row-actions">${actions.join('')}</div></td>
       </tr>`;
     });
@@ -2118,7 +2331,13 @@ _loginBtn.textContent = 'جاري التحميل...';
   _loginBtn.disabled = false;
   _loginBtn.textContent = 'تسجيل الدخول';
 
+  // Set today's date in booking form
+  try { const bd=document.getElementById('bDate'); if(bd) bd.value=todayISO(); } catch(e){}
   if (isLocked()) { showScreen('login'); startLockUI(); return; }
+
+  // Load barbers and working hours so booking form works even before login
+  try { await loadBarbers(); } catch(e){}
+  try { await loadWorkingHours(); } catch(e){}
 
   // Restore session
   const sess = getSession();
@@ -2132,6 +2351,402 @@ _loginBtn.textContent = 'جاري التحميل...';
     showScreen('admin');
   }
 })();
+
+
+/* ═══════════════════════════════════════════════
+   WORKING HOURS
+═══════════════════════════════════════════════ */
+let workingHours = {
+  branches: { branch1:{open:'',close:''}, branch2:{open:'',close:''} },
+  barbers: {}
+};
+
+async function loadWorkingHours() {
+  try {
+    const d = await fsGet('workingHours');
+    if (d) workingHours = d;
+  } catch(e) {}
+}
+
+async function saveWorkingHours() {
+  workingHours.branches.branch1.open  = document.getElementById('wh_b1_open').value;
+  workingHours.branches.branch1.close = document.getElementById('wh_b1_close').value;
+  workingHours.branches.branch2.open  = document.getElementById('wh_b2_open').value;
+  workingHours.branches.branch2.close = document.getElementById('wh_b2_close').value;
+
+  // Collect barber hours
+  const allBarbers = [...(barbers.branch1||[]), ...(barbers.branch2||[])];
+  allBarbers.forEach(name => {
+    const key = name.replace(/\s+/g,'_');
+    const o = document.getElementById('wh_barber_'+key+'_open');
+    const cl = document.getElementById('wh_barber_'+key+'_close');
+    if (o && cl) {
+      workingHours.barbers[name] = { open: o.value, close: cl.value };
+    }
+  });
+
+  try {
+    await fsSet('workingHours', workingHours);
+    const ok = document.getElementById('whOk');
+    ok.textContent = '✅ تم حفظ ساعات العمل بنجاح';
+    ok.classList.add('show');
+    setTimeout(()=>ok.classList.remove('show'), 3000);
+    showToast('✅ تم حفظ ساعات العمل');
+  } catch(e) {
+    showToast('❌ خطأ في الحفظ','var(--red)');
+  }
+}
+
+function renderBarberHoursGrid() {
+  const grid = document.getElementById('barberHoursGrid');
+  if (!grid) return;
+  const allBarbers = [...(barbers.branch1||[]), ...(barbers.branch2||[])];
+  if (!allBarbers.length) { grid.innerHTML='<p style="color:var(--text-muted);font-size:.85rem">لا يوجد حلاقون مضافون بعد</p>'; return; }
+  grid.innerHTML = allBarbers.map(name => {
+    const key = name.replace(/\s+/g,'_');
+    const hrs = workingHours.barbers[name] || {open:'',close:''};
+    const br  = (barbers.branch1||[]).includes(name) ? 'الفرع الأول' : 'الفرع الثاني';
+    return `<div style="background:var(--bg-input);border:1px solid var(--border);padding:.85rem">
+      <p style="font-size:.82rem;font-weight:600;color:var(--text-primary);margin-bottom:.5rem">${esc(name)} <span style="font-size:.7rem;color:var(--text-muted)">(${br})</span></p>
+      <div style="display:flex;gap:.5rem;align-items:center">
+        <div style="flex:1"><label style="font-size:.72rem;color:var(--text-muted)">من</label>
+          <input type="time" id="wh_barber_${key}_open" value="${hrs.open}"
+            style="width:100%;padding:.45rem .5rem;background:var(--bg-card);border:1px solid var(--border);color:var(--text-primary);font-family:inherit;font-size:.85rem;outline:none"/></div>
+        <div style="flex:1"><label style="font-size:.72rem;color:var(--text-muted)">إلى</label>
+          <input type="time" id="wh_barber_${key}_close" value="${hrs.close}"
+            style="width:100%;padding:.45rem .5rem;background:var(--bg-card);border:1px solid var(--border);color:var(--text-primary);font-family:inherit;font-size:.85rem;outline:none"/></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function populateWorkingHoursUI() {
+  const b1o = document.getElementById('wh_b1_open');
+  if (!b1o) return;
+  b1o.value = workingHours.branches?.branch1?.open  || '';
+  document.getElementById('wh_b1_close').value = workingHours.branches?.branch1?.close || '';
+  document.getElementById('wh_b2_open').value  = workingHours.branches?.branch2?.open  || '';
+  document.getElementById('wh_b2_close').value = workingHours.branches?.branch2?.close || '';
+  renderBarberHoursGrid();
+}
+
+// Get effective working hours for a barber+branch (most restrictive wins)
+function getEffectiveHours(branch, barberName) {
+  const bh = workingHours.branches?.[branch] || {open:'',close:''};
+  const ah = workingHours.barbers?.[barberName] || {open:'',close:''};
+  let open  = bh.open  || ah.open  || '';
+  let close = bh.close || ah.close || '';
+  // If both set, use most restrictive
+  if (bh.open && ah.open)   open  = bh.open  > ah.open  ? bh.open  : ah.open;
+  if (bh.close && ah.close) close = bh.close < ah.close ? bh.close : ah.close;
+  return {open, close};
+}
+
+// Update time input constraints for customer booking form
+function updateBookingTimeConstraints() {
+  const branch  = document.getElementById('bBranch').value;
+  const barber  = document.getElementById('bBarber').value;
+  const timeEl  = document.getElementById('bTime');
+  if (!branch || !barber) { timeEl.removeAttribute('min'); timeEl.removeAttribute('max'); return; }
+  const {open, close} = getEffectiveHours(branch, barber);
+  if (open)  timeEl.setAttribute('min', open);  else timeEl.removeAttribute('min');
+  if (close) timeEl.setAttribute('max', close); else timeEl.removeAttribute('max');
+}
+
+// Check if a time (HH:MM) is within working hours for branch+barber
+function isWithinWorkingHours(branch, barberName, hhmm) {
+  const {open, close} = getEffectiveHours(branch, barberName);
+  if (!open && !close) return true;  // no hours set = always open
+  if (open  && hhmm < open)  return false;
+  if (close && hhmm > close) return false;
+  return true;
+}
+
+/* ═══════════════════════════════════════════════
+   CUSTOMER BOOKING
+═══════════════════════════════════════════════ */
+
+// Populate barbers for booking form (uses same barbers from Firebase)
+function onBookingBarberChange() {
+  updateBookingTimeConstraints();
+}
+function onBookingBranchChange() {
+  const branch = document.getElementById('bBranch').value;
+  const sel    = document.getElementById('bBarber');
+  sel.innerHTML = '<option value="" disabled selected>اختر الحلاق</option>';
+  if (branch && barbers[branch] && barbers[branch].length) {
+    barbers[branch].forEach(name => {
+      const o = document.createElement('option');
+      o.value = name; o.textContent = name; sel.appendChild(o);
+    });
+    sel.disabled = false;
+  } else {
+    sel.innerHTML = '<option value="" disabled selected>اختر الفرع أولاً</option>';
+    sel.disabled = true;
+  }
+  sel.value = '';
+  sel.classList.remove('b-invalid');
+  updateBookingTimeConstraints();
+}
+
+// Get free time suggestions (2 before, 2 after), step = 30 min
+function getSuggestions(barber, date, timeRaw, branch) {
+  const base = timeToMins(timeRaw);
+  const taken = customers
+    .filter(c => c.barber === barber && c.date === date && c.timeRaw)
+    .map(c => timeToMins(c.timeRaw));
+
+  const {open, close} = getEffectiveHours(branch || '', barber);
+  const minMins = open  ? timeToMins(open)  : 0;
+  const maxMins = close ? timeToMins(close) : 23*60+30;
+
+  const isFree = (mins) => {
+    if (mins < minMins || mins > maxMins) return false;
+    return !taken.some(t => Math.abs(t - mins) < SLOT_MIN);
+  };
+
+  const before = [], after = [];
+  for (let step = 1; step <= 8 && before.length < 2; step++) {
+    const m = base - step * 30;
+    if (isFree(m)) before.unshift(m);
+  }
+  for (let step = 1; step <= 8 && after.length < 2; step++) {
+    const m = base + step * 30;
+    if (isFree(m)) after.push(m);
+  }
+  return [...before, ...after];
+}
+
+function minsToHHMM(mins) {
+  const h = Math.floor(mins/60), m = mins%60;
+  return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+}
+
+// Validate booking form fields, return false if invalid
+function validateBookingForm() {
+  const fields = [
+    ['bName',    document.getElementById('bName').value.trim().length > 0],
+    ['bPhone',   document.getElementById('bPhone').value.trim().length >= 7],
+    ['bDate',    document.getElementById('bDate').value.length > 0],
+    ['bBranch',  document.getElementById('bBranch').value.length > 0],
+    ['bBarber',  document.getElementById('bBarber').value.length > 0],
+    ['bTime',    document.getElementById('bTime').value.length > 0],
+    ['bPackage', document.getElementById('bPackage').value.length > 0],
+  ];
+  let ok = true;
+  fields.forEach(([id, valid]) => {
+    const el = document.getElementById(id);
+    if (valid) el.classList.remove('b-invalid');
+    else { el.classList.add('b-invalid'); ok = false; }
+  });
+  return ok;
+}
+
+async function submitBooking() {
+  const errEl = document.getElementById('bErr');
+  errEl.classList.remove('show');
+
+  if (!validateBookingForm()) {
+    errEl.textContent = '⚠️ يرجى تعبئة جميع الحقول';
+    errEl.classList.add('show'); return;
+  }
+
+  const name    = document.getElementById('bName').value.trim();
+  const phone   = document.getElementById('bPhone').value.trim();
+  const date    = document.getElementById('bDate').value;
+  const branch  = document.getElementById('bBranch').value;
+  const barber  = document.getElementById('bBarber').value;
+  const timeRaw = document.getElementById('bTime').value;
+  const pkg     = document.getElementById('bPackage').value;
+
+  const dateFmt    = fmtDate(date);
+  const branchLabel = BRANCH_LABELS[branch] || branch;
+
+  // Check working hours
+  if (!isWithinWorkingHours(branch, barber, timeRaw)) {
+    const {open, close} = getEffectiveHours(branch, barber);
+    const errEl = document.getElementById('bErr');
+    errEl.textContent = `⚠️ الوقت المختار خارج ساعات العمل. ساعات العمل: ${to12h(open)} — ${to12h(close)}`;
+    errEl.classList.add('show');
+    return;
+  }
+
+  // Check conflict
+  const conflict = findConflict(barber, dateFmt, timeRaw);
+  if (conflict) {
+    const suggestions = getSuggestions(barber, dateFmt, timeRaw, branch);
+    const diff = Math.abs(timeToMins(conflict.timeRaw||'00:00') - timeToMins(timeRaw));
+
+    document.getElementById('suggestMsg').innerHTML =
+      `الحلاق <strong>${esc(barber)}</strong> لديه موعد في هذا الوقت أو خلال 30 دقيقة منه.<br>
+       الفرق: <strong>${diff} دقيقة</strong>`;
+
+    const list = document.getElementById('suggestList');
+    if (suggestions.length === 0) {
+      list.innerHTML = '<div style="color:var(--text-muted);font-size:.85rem;padding:.5rem">لا تتوفر أوقات بديلة قريبة، يرجى اختيار وقت مختلف.</div>';
+    } else {
+      list.innerHTML = suggestions.map(mins => {
+        const hhmm = minsToHHMM(mins);
+        const label = to12h(hhmm);
+        const isBefore = mins < timeToMins(timeRaw);
+        return `<button class="suggestion-btn" onclick="pickSuggestion('${hhmm}')">
+          <span>${label}</span>
+          <span class="suggestion-label">${isBefore ? '▲ قبل الوقت المختار' : '▼ بعد الوقت المختار'}</span>
+        </button>`;
+      }).join('');
+    }
+
+    document.getElementById('suggestModal').classList.add('show');
+    return;
+  }
+
+  await saveBookingEntry(name, phone, dateFmt, timeRaw, pkg, branch, branchLabel, barber);
+}
+
+function closeSuggest() {
+  document.getElementById('suggestModal').classList.remove('show');
+}
+
+function pickSuggestion(hhmm) {
+  document.getElementById('bTime').value = hhmm;
+  document.getElementById('bTime').classList.remove('b-invalid');
+  closeSuggest();
+  submitBooking(); // re-validate with new time
+}
+
+async function saveBookingEntry(name, phone, dateFmt, timeRaw, pkg, branch, branchLabel, barber) {
+  const btn = document.getElementById('bBtn');
+  btn.disabled = true; btn.textContent = 'جاري الحجز...';
+
+  try {
+    const entry = {
+      seq: nextSeq, name, phone,
+      date: dateFmt, timeRaw, time: to12h(timeRaw),
+      package: pkg, branchKey: branch, branch: branchLabel, barber,
+      source: 'customer',   // mark as customer booking
+      bookedAt: new Date().toISOString()
+    };
+    customers.push(entry);
+    nextSeq++;
+    await persist();
+    showBookingConfirmation(entry);
+  } catch(e) {
+    const errEl = document.getElementById('bErr');
+    errEl.textContent = '❌ حدث خطأ أثناء الحجز. يرجى المحاولة مرة أخرى.';
+    errEl.classList.add('show');
+  } finally {
+    btn.disabled = false; btn.textContent = '📅 تأكيد الحجز';
+  }
+}
+
+function showBookingConfirmation(entry) {
+  const TEXT_PKGS = ['شعر','دقن','شعر + دقن'];
+  const pkgLabel  = TEXT_PKGS.includes(entry.package) ? entry.package : 'الباقة ' + entry.package;
+
+  document.getElementById('confirmDetails').innerHTML = `
+    <div class="confirm-row"><span class="confirm-key">الاسم</span><span class="confirm-val">${esc(entry.name)}</span></div>
+    <div class="confirm-row"><span class="confirm-key">التاريخ</span><span class="confirm-val">${esc(entry.date)}</span></div>
+    <div class="confirm-row"><span class="confirm-key">الوقت</span><span class="confirm-val">${esc(entry.time)}</span></div>
+    <div class="confirm-row"><span class="confirm-key">الفرع</span><span class="confirm-val">${esc(entry.branch)}</span></div>
+    <div class="confirm-row"><span class="confirm-key">الحلاق</span><span class="confirm-val">${esc(entry.barber)}</span></div>
+    <div class="confirm-row"><span class="confirm-key">الباقة</span><span class="confirm-val">${esc(pkgLabel)}</span></div>
+  `;
+
+  // Hide form, show confirmation
+  document.getElementById('bookingSection').style.display = 'none';
+  document.getElementById('bookingConfirm').style.display = 'block';
+  document.getElementById('bookingConfirm').scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function resetBookingForm() {
+  ['bName','bPhone','bTime'].forEach(id => {
+    const el = document.getElementById(id); el.value = ''; el.classList.remove('b-invalid');
+  });
+  ['bDate','bBranch','bPackage'].forEach(id => {
+    const el = document.getElementById(id); el.value = ''; el.classList.remove('b-invalid');
+  });
+  const bs = document.getElementById('bBarber');
+  bs.innerHTML = '<option value="" disabled selected>اختر الفرع أولاً</option>';
+  bs.disabled = true; bs.classList.remove('b-invalid');
+  document.getElementById('bDate').value = todayISO();
+  document.getElementById('bErr').classList.remove('show');
+  document.getElementById('bookingSection').style.display = 'block';
+  document.getElementById('bookingConfirm').style.display = 'none';
+  document.getElementById('bookingSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// Phone input for booking form
+document.addEventListener('DOMContentLoaded', () => {
+  const bph = document.getElementById('bPhone');
+  if (bph) {
+    bph.addEventListener('input', () => {
+      let v = bph.value.replace(/\D/g,'');
+      if (v.length > 10) v = v.slice(0,10);
+      bph.value = v;
+    });
+    bph.addEventListener('keydown', e => {
+      const allow = ['Backspace','Delete','Tab','Escape','Enter','ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Home','End'];
+      if (allow.includes(e.key)) return;
+      if ((e.ctrlKey||e.metaKey) && 'acvxz'.includes(e.key.toLowerCase())) return;
+      if (!/^\d$/.test(e.key)) e.preventDefault();
+    });
+  }
+  // Set today's date as default for booking
+  const bDate = document.getElementById('bDate');
+  if (bDate) bDate.value = todayISO();
+});
+
+// Close suggest modal on backdrop click
+document.addEventListener('DOMContentLoaded', () => {
+  const sm = document.getElementById('suggestModal');
+  if (sm) sm.addEventListener('click', e => { if (e.target === e.currentTarget) closeSuggest(); });
+});
+
+/* ═══════════════════════════════════════════════
+   CUSTOMER BOOKINGS TAB
+═══════════════════════════════════════════════ */
+function renderCustBookings() {
+  const custEntries = customers.filter(c => c.source === 'customer');
+  const badge = document.getElementById('custBookBadge');
+  if (badge) {
+    badge.textContent = custEntries.length;
+    badge.style.display = custEntries.length ? 'inline-block' : 'none';
+  }
+
+  const tbody = document.getElementById('custBookBody');
+  const empty = document.getElementById('custBookEmpty');
+  if (!tbody) return;
+
+  if (!custEntries.length) {
+    tbody.innerHTML = ''; empty.style.display = 'block'; return;
+  }
+  empty.style.display = 'none';
+
+  const TEXT_PKGS = ['شعر','دقن','شعر + دقن'];
+  const pkgLabel  = p => TEXT_PKGS.includes(p) ? p : 'الباقة ' + p;
+
+  // Sort by date then time
+  const sorted = [...custEntries].sort((a,b) => {
+    const toISO = s => s ? s.split('/').reverse().join('-') : '';
+    const da = toISO(a.date||''), db = toISO(b.date||'');
+    if (da !== db) return da < db ? -1 : 1;
+    const ta = a.timeRaw||'00:00', tb = b.timeRaw||'00:00';
+    return ta < tb ? -1 : ta > tb ? 1 : 0;
+  });
+
+  tbody.innerHTML = sorted.map(c => `
+    <tr>
+      <td class="td-seq">#${String(c.seq).padStart(3,'0')}</td>
+      <td>${esc(c.name)}</td>
+      <td dir="ltr" style="text-align:right">${esc(c.phone)}</td>
+      <td class="td-date">${esc(c.date||'')}</td>
+      <td class="td-time">${esc(c.time)}</td>
+      <td><span class="td-pkg">${esc(pkgLabel(c.package))}</span></td>
+      <td class="td-branch">${esc(c.branch||'')}</td>
+      <td>${esc(c.barber)}</td>
+    </tr>`).join('');
+}
+
 </script>
 </body>
 </html>
